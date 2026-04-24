@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "9f615580-6041-48d6-b8b6-a84ccfa9b4ab",
     "name": "Rental PS API",
-    "description": "API untuk sistem manajemen rental PlayStation. Collection ini mencakup health check, console, product, package, dan transaction flow utama.\n\nJalankan server dulu:\n- npm start\n- atau\n- npm run dev\n\nUrutan test manual yang disarankan:\n1. Health Check\n2. List Consoles\n3. List Products\n4. List Packages\n5. Start Open Transaction\n6. Add Item to Transaction\n7. Finish Transaction\n8. Start Package Transaction\n9. Move Console\n10. Finish Package Transaction\n\nCatatan penting:\n- Collection ini mengubah data database.\n- Stok produk akan berkurang.\n- Status console akan berubah sementara.\n- Transaction baru akan tercatat.",
+    "description": "API untuk sistem manajemen rental PlayStation. Collection ini mencakup health check, auth/login, console, product, package, dan transaction flow utama.\n\nJalankan server dulu:\n- npm start\n- atau\n- npm run dev\n\nUrutan test manual yang disarankan:\n1. Health Check\n2. Login\n3. List Consoles\n4. List Products\n5. List Packages\n6. List Active Transactions\n7. Start Open Transaction\n8. Add Item to Transaction\n9. Finish Transaction\n10. Start Package Transaction\n11. Move Console\n12. Finish Package Transaction\n\nCatatan penting:\n- Collection ini mengubah data database.\n- Stok produk akan berkurang.\n- Status console akan berubah sementara.\n- Transaction baru akan tercatat.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -43,14 +43,73 @@
       ]
     },
     {
+      "name": "Auth",
+      "item": [
+        {
+          "name": "Login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "description": "Login menggunakan username atau email, lalu simpan JWT token ke collection variable.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"identifier\": \"admin\",\n  \"password\": \"admin123\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"success true\", () => pm.expect(json.success).to.eql(true));",
+                  "pm.test(\"token exists\", () => pm.expect(json.data.token).to.exist);",
+                  "pm.collectionVariables.set(\"token\", json.data.token);"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "Consoles",
       "item": [
         {
           "name": "List Consoles",
           "request": {
             "method": "GET",
-            "header": [],
-            "description": "Ambil semua data console PlayStation yang tersedia di sistem.",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "Ambil semua data console PlayStation yang tersedia di sistem. Endpoint ini membutuhkan JWT.",
             "url": {
               "raw": "{{baseUrl}}/api/consoles",
               "host": [
@@ -88,8 +147,13 @@
           "name": "List Products",
           "request": {
             "method": "GET",
-            "header": [],
-            "description": "Ambil daftar produk makanan dan minuman untuk transaksi tambahan.",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "Ambil daftar produk makanan dan minuman untuk transaksi tambahan. Endpoint ini membutuhkan JWT.",
             "url": {
               "raw": "{{baseUrl}}/api/products",
               "host": [
@@ -127,8 +191,13 @@
           "name": "List Packages",
           "request": {
             "method": "GET",
-            "header": [],
-            "description": "Ambil daftar rental package yang aktif untuk tiap tipe console.",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "Ambil daftar rental package yang aktif untuk tiap tipe console. Endpoint ini membutuhkan JWT.",
             "url": {
               "raw": "{{baseUrl}}/api/packages",
               "host": [
@@ -169,8 +238,13 @@
           "name": "List Active Transactions",
           "request": {
             "method": "GET",
-            "header": [],
-            "description": "Ambil semua transaksi yang masih ACTIVE.",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "Ambil semua transaksi yang masih ACTIVE. Endpoint ini membutuhkan JWT.",
             "url": {
               "raw": "{{baseUrl}}/api/transactions/active",
               "host": [
@@ -207,9 +281,13 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
               }
             ],
-            "description": "Memulai transaksi OPEN baru berdasarkan consoleCode.",
+            "description": "Memulai transaksi OPEN baru berdasarkan consoleCode. Endpoint ini membutuhkan JWT.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"consoleCode\": \"{{consoleCode}}\"\n}",
@@ -258,9 +336,13 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
               }
             ],
-            "description": "Menambahkan item produk ke transaksi aktif menggunakan productName dan quantity.",
+            "description": "Menambahkan item produk ke transaksi aktif menggunakan productName dan quantity. Endpoint ini membutuhkan JWT.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"productName\": \"{{productName}}\",\n  \"quantity\": 1\n}",
@@ -305,8 +387,13 @@
           "name": "Finish Transaction",
           "request": {
             "method": "POST",
-            "header": [],
-            "description": "Menyelesaikan transaksi aktif dan menghitung total akhir.",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "Menyelesaikan transaksi aktif dan menghitung total akhir. Endpoint ini membutuhkan JWT.",
             "url": {
               "raw": "{{baseUrl}}/api/transactions/{{transactionId}}/finish",
               "host": [
@@ -348,9 +435,13 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
               }
             ],
-            "description": "Memulai transaksi PACKAGE baru. Pastikan packageId sesuai dengan tipe consoleCode. Jika gagal karena package beda tipe, ubah packageId dari response List Packages.",
+            "description": "Memulai transaksi PACKAGE baru. Pastikan packageId sesuai dengan tipe consoleCode. Jika gagal karena package beda tipe, ubah packageId dari response List Packages. Endpoint ini membutuhkan JWT.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"consoleCode\": \"{{consoleCode}}\",\n  \"packageId\": \"{{packageId}}\"\n}",
@@ -399,9 +490,13 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
               }
             ],
-            "description": "Memindahkan transaksi aktif ke console lain dengan tipe yang sama dan status AVAILABLE.",
+            "description": "Memindahkan transaksi aktif ke console lain dengan tipe yang sama dan status AVAILABLE. Endpoint ini membutuhkan JWT.",
             "body": {
               "mode": "raw",
               "raw": "{\n  \"targetConsoleCode\": \"{{targetConsoleCode}}\"\n}",
@@ -443,8 +538,13 @@
           "name": "Finish Package Transaction",
           "request": {
             "method": "POST",
-            "header": [],
-            "description": "Menutup transactionId hasil Start Package Transaction agar tidak tertinggal ACTIVE.",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "Menutup transactionId hasil Start Package Transaction agar tidak tertinggal ACTIVE. Endpoint ini membutuhkan JWT.",
             "url": {
               "raw": "{{baseUrl}}/api/transactions/{{transactionId}}/finish",
               "host": [
@@ -482,6 +582,11 @@
     {
       "key": "baseUrl",
       "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "token",
+      "value": "",
       "type": "string"
     },
     {

@@ -8,9 +8,26 @@ const {
   getActiveTransactions,
 } = require("../services/transaction.service");
 
+function sanitizeTransactionResponse(transaction) {
+  if (!transaction) {
+    return transaction;
+  }
+
+  if (!transaction.user) {
+    return transaction;
+  }
+
+  const { password, ...safeUser } = transaction.user;
+
+  return {
+    ...transaction,
+    user: safeUser,
+  };
+}
+
 async function listActiveTransactions(req, res, next) {
   try {
-    const transactions = await getActiveTransactions();
+    const transactions = (await getActiveTransactions()).map(sanitizeTransactionResponse);
 
     res.status(200).json({
       success: true,
@@ -23,11 +40,14 @@ async function listActiveTransactions(req, res, next) {
 
 async function createOpenTransaction(req, res, next) {
   try {
-    const transaction = await startOpenTransaction(req.body || {});
+    const transaction = await startOpenTransaction({
+      ...(req.body || {}),
+      userId: req.user.id,
+    });
 
     res.status(201).json({
       success: true,
-      data: transaction,
+      data: sanitizeTransactionResponse(transaction),
     });
   } catch (error) {
     next(error);
@@ -36,11 +56,14 @@ async function createOpenTransaction(req, res, next) {
 
 async function createPackageTransaction(req, res, next) {
   try {
-    const transaction = await startPackageTransaction(req.body || {});
+    const transaction = await startPackageTransaction({
+      ...(req.body || {}),
+      userId: req.user.id,
+    });
 
     res.status(201).json({
       success: true,
-      data: transaction,
+      data: sanitizeTransactionResponse(transaction),
     });
   } catch (error) {
     next(error);
@@ -86,7 +109,7 @@ async function createTransactionItem(req, res, next) {
 
     res.status(200).json({
       success: true,
-      data: transaction,
+      data: sanitizeTransactionResponse(transaction),
     });
   } catch (error) {
     next(error);
@@ -100,7 +123,7 @@ async function completeTransaction(req, res, next) {
 
     res.status(200).json({
       success: true,
-      data: transaction,
+      data: sanitizeTransactionResponse(transaction),
     });
   } catch (error) {
     next(error);
@@ -119,7 +142,7 @@ async function changeTransactionConsole(req, res, next) {
 
     res.status(200).json({
       success: true,
-      data: transaction,
+      data: sanitizeTransactionResponse(transaction),
     });
   } catch (error) {
     next(error);

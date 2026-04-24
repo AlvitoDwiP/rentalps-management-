@@ -1,6 +1,7 @@
 const cors = require("cors");
 const express = require("express");
 
+const authRoutes = require("./routes/auth.routes");
 const consoleRoutes = require("./routes/console.routes");
 const packageRoutes = require("./routes/package.routes");
 const productRoutes = require("./routes/product.routes");
@@ -9,6 +10,10 @@ const transactionRoutes = require("./routes/transaction.routes");
 const app = express();
 
 function resolveErrorStatus(error) {
+  if (error.status) {
+    return error.status;
+  }
+
   const message = (error.message || "").toLowerCase();
 
   if (
@@ -47,6 +52,7 @@ app.get("/health", (req, res) => {
   });
 });
 
+app.use("/api/auth", authRoutes);
 app.use("/api/consoles", consoleRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/packages", packageRoutes);
