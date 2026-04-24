@@ -1,0 +1,21 @@
+$kind: http-request
+description: Memindahkan transaksi aktif ke console lain dengan tipe yang sama dan status AVAILABLE. Endpoint ini membutuhkan JWT.
+url: "{{baseUrl}}/api/transactions/{{transactionId}}/console"
+method: PATCH
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+body:
+  type: json
+  content: |-
+    {
+      "targetConsoleCode": "{{targetConsoleCode}}"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      const json = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("success true", () => pm.expect(json.success).to.eql(true));
+    language: text/javascript
+order: 6000

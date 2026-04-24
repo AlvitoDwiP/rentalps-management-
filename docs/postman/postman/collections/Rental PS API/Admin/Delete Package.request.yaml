@@ -1,0 +1,14 @@
+$kind: http-request
+description: Soft delete package dengan mengubah isActive menjadi false.
+url: "{{baseUrl}}/api/admin/packages/{{adminPackageId}}"
+method: DELETE
+headers:
+  Authorization: Bearer {{token}}
+scripts:
+  - type: afterResponse
+    code: |-
+      const json = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("success true", () => pm.expect(json.success).to.eql(true));
+    language: text/javascript
+order: 6000

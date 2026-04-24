@@ -1,0 +1,25 @@
+$kind: http-request
+description: Memulai transaksi OPEN baru berdasarkan consoleCode. Endpoint ini membutuhkan JWT.
+url: "{{baseUrl}}/api/transactions/open"
+method: POST
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+body:
+  type: json
+  content: |-
+    {
+      "consoleCode": "{{consoleCode}}"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      const json = pm.response.json();
+      pm.test("status 200 or 201", () => {
+        pm.expect([200, 201]).to.include(pm.response.code);
+      });
+      pm.test("success true", () => pm.expect(json.success).to.eql(true));
+      pm.test("transaction id exists", () => pm.expect(json.data.id).to.exist);
+      pm.collectionVariables.set("transactionId", json.data.id);
+    language: text/javascript
+order: 2000

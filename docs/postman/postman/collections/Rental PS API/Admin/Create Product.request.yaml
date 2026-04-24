@@ -1,0 +1,26 @@
+$kind: http-request
+description: Membuat product baru. Jika category tidak dikirim, API akan memakai default category.
+url: "{{baseUrl}}/api/admin/products"
+method: POST
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+body:
+  type: json
+  content: |-
+    {
+      "name": "Fanta {{$timestamp}}",
+      "price": 6000,
+      "stock": 20,
+      "category": "DRINK"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      const json = pm.response.json();
+      pm.test("status 201", () => pm.response.to.have.status(201));
+      pm.test("success true", () => pm.expect(json.success).to.eql(true));
+      pm.test("product id exists", () => pm.expect(json.data.id).to.exist);
+      pm.collectionVariables.set("adminProductId", json.data.id);
+    language: text/javascript
+order: 1000

@@ -1,0 +1,25 @@
+$kind: http-request
+description: Membuat user CASHIER baru. Jika email tidak dikirim, API akan membuat email default dari username.
+url: "{{baseUrl}}/api/admin/users"
+method: POST
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+body:
+  type: json
+  content: |-
+    {
+      "name": "Kasir {{$timestamp}}",
+      "username": "kasir{{$timestamp}}",
+      "password": "123456",
+      "role": "CASHIER"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      const json = pm.response.json();
+      pm.test("status 201", () => pm.response.to.have.status(201));
+      pm.test("success true", () => pm.expect(json.success).to.eql(true));
+      pm.test("role cashier", () => pm.expect(json.data.role).to.eql("CASHIER"));
+    language: text/javascript
+order: 9000

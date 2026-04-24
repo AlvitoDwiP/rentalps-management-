@@ -1,0 +1,21 @@
+$kind: http-request
+description: Mengubah status console antara AVAILABLE dan MAINTENANCE. Pastikan consoleId mengarah ke console yang tidak sedang IN_USE.
+url: "{{baseUrl}}/api/admin/consoles/{{consoleId}}/maintenance"
+method: PATCH
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+body:
+  type: json
+  content: |-
+    {
+      "status": "MAINTENANCE"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      const json = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("success true", () => pm.expect(json.success).to.eql(true));
+    language: text/javascript
+order: 8000

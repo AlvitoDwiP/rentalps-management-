@@ -1,0 +1,22 @@
+$kind: http-request
+description: Ambil semua data console PlayStation yang tersedia di sistem. Endpoint ini membutuhkan JWT.
+url: "{{baseUrl}}/api/consoles"
+method: GET
+headers:
+  Authorization: Bearer {{token}}
+scripts:
+  - type: afterResponse
+    code: |-
+      const json = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("success true", () => pm.expect(json.success).to.eql(true));
+      pm.test("data is array", () => pm.expect(json.data).to.be.an("array"));
+      pm.test("minimal 15 consoles", () => pm.expect(json.data.length).to.be.at.least(15));
+      if (json.data && json.data.length > 0) {
+        const availableConsole = json.data.find((item) => item.status === "AVAILABLE") || json.data[0];
+        if (availableConsole && availableConsole.id) {
+          pm.collectionVariables.set("consoleId", availableConsole.id);
+        }
+      }
+    language: text/javascript
+order: 1000

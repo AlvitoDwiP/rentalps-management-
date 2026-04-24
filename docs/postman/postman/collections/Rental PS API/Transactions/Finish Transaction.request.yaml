@@ -1,0 +1,19 @@
+$kind: http-request
+description: Menyelesaikan transaksi aktif dan menghitung total akhir. Endpoint ini membutuhkan JWT.
+url: "{{baseUrl}}/api/transactions/{{transactionId}}/finish"
+method: POST
+headers:
+  Authorization: Bearer {{token}}
+scripts:
+  - type: afterResponse
+    code: |-
+      const json = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("success true", () => pm.expect(json.success).to.eql(true));
+      pm.test("status completed", () => pm.expect(json.data.status).to.eql("COMPLETED"));
+      pm.test("durationMinutes exists", () => pm.expect(json.data.durationMinutes).to.exist);
+      pm.test("rentalTotal exists", () => pm.expect(json.data.rentalTotal).to.exist);
+      pm.test("productTotal exists", () => pm.expect(json.data.productTotal).to.exist);
+      pm.test("grandTotal exists", () => pm.expect(json.data.grandTotal).to.exist);
+    language: text/javascript
+order: 4000

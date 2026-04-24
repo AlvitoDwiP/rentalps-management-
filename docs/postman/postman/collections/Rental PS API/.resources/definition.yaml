@@ -1,0 +1,45 @@
+$kind: collection
+description: |-
+  API untuk sistem manajemen rental PlayStation. Collection ini mencakup health check, auth/login, console, product, package, transaction flow utama, dan admin API.
+
+  Jalankan server dulu:
+  - npm start
+  - atau
+  - npm run dev
+
+  Urutan test manual yang disarankan:
+  1. Health Check
+  2. Login
+  3. List Consoles
+  4. List Products
+  5. List Packages
+  6. List Active Transactions
+  7. Start Open Transaction
+  8. Add Item to Transaction
+  9. Finish Transaction
+  10. Start Package Transaction
+  11. Move Console
+  12. Finish Package Transaction
+  13. Admin - Create Product
+  14. Admin - Update Product
+  15. Admin - Create Cashier
+  16. Admin - Set Console Maintenance
+
+  Catatan penting:
+  - Collection ini mengubah data database.
+  - Stok produk akan berkurang.
+  - Status console akan berubah sementara.
+  - Transaction baru akan tercatat.
+  - Request admin juga dapat membuat master data baru atau menonaktifkan data lama.
+variables:
+  baseUrl: http://localhost:3000
+  token: ""
+  transactionId: ""
+  packageId: ""
+  consoleId: ""
+  rateId: ""
+  adminProductId: ""
+  adminPackageId: ""
+  targetConsoleCode: PS5-02
+  productName: Air Mineral
+  consoleCode: PS5-01

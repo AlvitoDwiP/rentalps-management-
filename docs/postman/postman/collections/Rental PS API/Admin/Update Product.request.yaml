@@ -1,0 +1,23 @@
+$kind: http-request
+description: Update field product yang dikirim saja.
+url: "{{baseUrl}}/api/admin/products/{{adminProductId}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+body:
+  type: json
+  content: |-
+    {
+      "price": 7000,
+      "stock": 30,
+      "isActive": true
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      const json = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("success true", () => pm.expect(json.success).to.eql(true));
+    language: text/javascript
+order: 2000

@@ -1,0 +1,26 @@
+$kind: http-request
+description: Memulai transaksi PACKAGE baru. Pastikan packageId sesuai dengan tipe consoleCode. Jika gagal karena package beda tipe, ubah packageId dari response List Packages. Endpoint ini membutuhkan JWT.
+url: "{{baseUrl}}/api/transactions/package"
+method: POST
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+body:
+  type: json
+  content: |-
+    {
+      "consoleCode": "{{consoleCode}}",
+      "packageId": "{{packageId}}"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      const json = pm.response.json();
+      pm.test("status 200 or 201", () => {
+        pm.expect([200, 201]).to.include(pm.response.code);
+      });
+      pm.test("success true", () => pm.expect(json.success).to.eql(true));
+      pm.test("transaction id exists", () => pm.expect(json.data.id).to.exist);
+      pm.collectionVariables.set("transactionId", json.data.id);
+    language: text/javascript
+order: 5000

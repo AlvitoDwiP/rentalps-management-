@@ -1,0 +1,12 @@
+$kind: http-request
+description: Cek apakah server API berjalan normal.
+url: "{{baseUrl}}/health"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      const json = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("success true", () => pm.expect(json.success).to.eql(true));
+    language: text/javascript
+order: 1000

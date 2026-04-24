@@ -1,0 +1,21 @@
+$kind: http-request
+description: Update harga rental rate berdasarkan id. Isi variable rateId secara manual dari database atau Prisma Studio sebelum menjalankan request ini.
+url: "{{baseUrl}}/api/admin/rates/{{rateId}}"
+method: PATCH
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+body:
+  type: json
+  content: |-
+    {
+      "pricePerHour": 15000
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      const json = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("success true", () => pm.expect(json.success).to.eql(true));
+    language: text/javascript
+order: 7000

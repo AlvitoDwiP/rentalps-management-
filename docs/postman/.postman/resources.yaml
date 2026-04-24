@@ -1,0 +1,11 @@
+# Use this workspace to collaborate
+workspace:
+  id: 7c6454a3-d219-4254-8f98-dba1f702b0c3
+
+localResources:
+  collections:
+    - ../Rental-PS-API.postman_collection.json
+
+cloudResources:
+  collections:
+    ../postman/collections/Rental PS API: 044c4ef0-421c-4a1b-a5d8-2a01172cdbc1

@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "9f615580-6041-48d6-b8b6-a84ccfa9b4ab",
     "name": "Rental PS API",
-    "description": "API untuk sistem manajemen rental PlayStation. Collection ini mencakup health check, auth/login, console, product, package, dan transaction flow utama.\n\nJalankan server dulu:\n- npm start\n- atau\n- npm run dev\n\nUrutan test manual yang disarankan:\n1. Health Check\n2. Login\n3. List Consoles\n4. List Products\n5. List Packages\n6. List Active Transactions\n7. Start Open Transaction\n8. Add Item to Transaction\n9. Finish Transaction\n10. Start Package Transaction\n11. Move Console\n12. Finish Package Transaction\n\nCatatan penting:\n- Collection ini mengubah data database.\n- Stok produk akan berkurang.\n- Status console akan berubah sementara.\n- Transaction baru akan tercatat.",
+    "description": "API untuk sistem manajemen rental PlayStation. Collection ini mencakup health check, auth/login, console, product, package, transaction flow utama, dan admin API.\n\nJalankan server dulu:\n- npm start\n- atau\n- npm run dev\n\nUrutan test manual yang disarankan:\n1. Health Check\n2. Login\n3. List Consoles\n4. List Products\n5. List Packages\n6. List Active Transactions\n7. Start Open Transaction\n8. Add Item to Transaction\n9. Finish Transaction\n10. Start Package Transaction\n11. Move Console\n12. Finish Package Transaction\n13. Admin - Create Product\n14. Admin - Update Product\n15. Admin - Create Cashier\n16. Admin - Set Console Maintenance\n\nCatatan penting:\n- Collection ini mengubah data database.\n- Stok produk akan berkurang.\n- Status console akan berubah sementara.\n- Transaction baru akan tercatat.\n- Request admin juga dapat membuat master data baru atau menonaktifkan data lama.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -132,7 +132,13 @@
                   "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
                   "pm.test(\"success true\", () => pm.expect(json.success).to.eql(true));",
                   "pm.test(\"data is array\", () => pm.expect(json.data).to.be.an(\"array\"));",
-                  "pm.test(\"minimal 15 consoles\", () => pm.expect(json.data.length).to.be.at.least(15));"
+                  "pm.test(\"minimal 15 consoles\", () => pm.expect(json.data.length).to.be.at.least(15));",
+                  "if (json.data && json.data.length > 0) {",
+                  "  const availableConsole = json.data.find((item) => item.status === \"AVAILABLE\") || json.data[0];",
+                  "  if (availableConsole && availableConsole.id) {",
+                  "    pm.collectionVariables.set(\"consoleId\", availableConsole.id);",
+                  "  }",
+                  "}"
                 ]
               }
             }
@@ -575,6 +581,456 @@
           ]
         }
       ]
+    },
+    {
+      "name": "Admin",
+      "item": [
+        {
+          "name": "Create Product",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "Membuat product baru. Jika category tidak dikirim, API akan memakai default category.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Fanta {{$timestamp}}\",\n  \"price\": 6000,\n  \"stock\": 20,\n  \"category\": \"DRINK\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/products",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test(\"status 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"success true\", () => pm.expect(json.success).to.eql(true));",
+                  "pm.test(\"product id exists\", () => pm.expect(json.data.id).to.exist);",
+                  "pm.collectionVariables.set(\"adminProductId\", json.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Product",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "Update field product yang dikirim saja.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 7000,\n  \"stock\": 30,\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/products/{{adminProductId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{adminProductId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"success true\", () => pm.expect(json.success).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Product",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "Soft delete product dengan mengubah isActive menjadi false.",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/products/{{adminProductId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "products",
+                "{{adminProductId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"success true\", () => pm.expect(json.success).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Package",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "Membuat rental package baru untuk tipe console tertentu.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"PS5 2 Jam {{$timestamp}}\",\n  \"consoleType\": \"PS5\",\n  \"durationMinutes\": 120,\n  \"price\": 24000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/packages",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "packages"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test(\"status 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"success true\", () => pm.expect(json.success).to.eql(true));",
+                  "pm.test(\"package id exists\", () => pm.expect(json.data.id).to.exist);",
+                  "pm.collectionVariables.set(\"adminPackageId\", json.data.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Package",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "Update field package yang dikirim saja.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"price\": 25000,\n  \"isActive\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/packages/{{adminPackageId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "packages",
+                "{{adminPackageId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"success true\", () => pm.expect(json.success).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete Package",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "Soft delete package dengan mengubah isActive menjadi false.",
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/packages/{{adminPackageId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "packages",
+                "{{adminPackageId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"success true\", () => pm.expect(json.success).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update Rate",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "Update harga rental rate berdasarkan id. Isi variable rateId secara manual dari database atau Prisma Studio sebelum menjalankan request ini.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pricePerHour\": 15000\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/rates/{{rateId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "rates",
+                "{{rateId}}"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"success true\", () => pm.expect(json.success).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Set Console Maintenance",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "Mengubah status console antara AVAILABLE dan MAINTENANCE. Pastikan consoleId mengarah ke console yang tidak sedang IN_USE.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"MAINTENANCE\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/consoles/{{consoleId}}/maintenance",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "consoles",
+                "{{consoleId}}",
+                "maintenance"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test(\"status 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"success true\", () => pm.expect(json.success).to.eql(true));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create Cashier",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{token}}"
+              }
+            ],
+            "description": "Membuat user CASHIER baru. Jika email tidak dikirim, API akan membuat email default dari username.",
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Kasir {{$timestamp}}\",\n  \"username\": \"kasir{{$timestamp}}\",\n  \"password\": \"123456\",\n  \"role\": \"CASHIER\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/users",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "users"
+              ]
+            }
+          },
+          "response": [],
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "const json = pm.response.json();",
+                  "pm.test(\"status 201\", () => pm.response.to.have.status(201));",
+                  "pm.test(\"success true\", () => pm.expect(json.success).to.eql(true));",
+                  "pm.test(\"role cashier\", () => pm.expect(json.data.role).to.eql(\"CASHIER\"));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
     }
   ],
   "event": [],
@@ -596,6 +1052,26 @@
     },
     {
       "key": "packageId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "consoleId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "rateId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminProductId",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "adminPackageId",
       "value": "",
       "type": "string"
     },

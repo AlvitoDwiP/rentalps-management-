@@ -1,0 +1,26 @@
+$kind: http-request
+description: Membuat rental package baru untuk tipe console tertentu.
+url: "{{baseUrl}}/api/admin/packages"
+method: POST
+headers:
+  Content-Type: application/json
+  Authorization: Bearer {{token}}
+body:
+  type: json
+  content: |-
+    {
+      "name": "PS5 2 Jam {{$timestamp}}",
+      "consoleType": "PS5",
+      "durationMinutes": 120,
+      "price": 24000
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      const json = pm.response.json();
+      pm.test("status 201", () => pm.response.to.have.status(201));
+      pm.test("success true", () => pm.expect(json.success).to.eql(true));
+      pm.test("package id exists", () => pm.expect(json.data.id).to.exist);
+      pm.collectionVariables.set("adminPackageId", json.data.id);
+    language: text/javascript
+order: 4000

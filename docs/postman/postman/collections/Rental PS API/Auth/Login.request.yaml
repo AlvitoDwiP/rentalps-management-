@@ -1,0 +1,23 @@
+$kind: http-request
+description: Login menggunakan username atau email, lalu simpan JWT token ke collection variable.
+url: "{{baseUrl}}/api/auth/login"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: json
+  content: |-
+    {
+      "identifier": "admin",
+      "password": "admin123"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      const json = pm.response.json();
+      pm.test("status 200", () => pm.response.to.have.status(200));
+      pm.test("success true", () => pm.expect(json.success).to.eql(true));
+      pm.test("token exists", () => pm.expect(json.data.token).to.exist);
+      pm.collectionVariables.set("token", json.data.token);
+    language: text/javascript
+order: 1000
