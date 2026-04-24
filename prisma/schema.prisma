@@ -128,10 +128,14 @@ model Transaction {
   customerName            String?
   startTime               DateTime
   endTime                 DateTime?
+  durationMinutes         Int?
   extraTimeMinutes        Int                @default(0)
   hourlyRateSnapshot      Decimal            @db.Decimal(10, 2)
   packagePriceSnapshot    Decimal?           @db.Decimal(10, 2)
   packageDurationSnapshot Int?
+  rentalTotal             Int                @default(0)
+  productTotal            Int                @default(0)
+  grandTotal              Int                @default(0)
   notes                   String?
   user                    User               @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
   playStationUnit         PlayStationUnit    @relation(fields: [playStationUnitId], references: [id], onDelete: Restrict, onUpdate: Cascade)

@@ -11,7 +11,8 @@
     "prisma:seed": "node prisma/seed.js",
     "prisma:studio": "npx prisma studio",
     "prisma:generate": "npx prisma generate",
-    "prisma:test": "node scripts/test-prisma-connection.js"
+    "prisma:test": "node scripts/test-prisma-connection.js",
+    "test:transaction-service": "node scripts/test-transaction-service.js"
   },
   "repository": {
     "type": "git",
