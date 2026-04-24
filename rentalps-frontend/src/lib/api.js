@@ -97,4 +97,34 @@ export async function moveTransactionConsoleRequest({
   return response.data.data;
 }
 
+export async function createAdminProductRequest(payload) {
+  const response = await api.post("/admin/products", payload);
+  return response.data.data;
+}
+
+export async function updateAdminProductRequest({ id, payload }) {
+  const response = await api.patch(`/admin/products/${id}`, payload);
+  return response.data.data;
+}
+
+export async function deleteAdminProductRequest(id) {
+  const response = await api.delete(`/admin/products/${id}`);
+  return response.data.data;
+}
+
+export async function createAdminPackageRequest(payload) {
+  const response = await api.post("/admin/packages", payload);
+  return response.data.data;
+}
+
+export async function updateAdminPackageRequest({ id, payload }) {
+  const response = await api.patch(`/admin/packages/${id}`, payload);
+  return response.data.data;
+}
+
+export async function deleteAdminPackageRequest(id) {
+  const response = await api.delete(`/admin/packages/${id}`);
+  return response.data.data;
+}
+
 export default api;
