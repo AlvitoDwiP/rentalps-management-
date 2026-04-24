@@ -87,4 +87,14 @@ export async function addTransactionItemRequest({
   return response.data.data;
 }
 
+export async function moveTransactionConsoleRequest({
+  transactionId,
+  targetConsoleCode,
+}) {
+  const response = await api.patch(`/transactions/${transactionId}/console`, {
+    targetConsoleCode,
+  });
+  return response.data.data;
+}
+
 export default api;

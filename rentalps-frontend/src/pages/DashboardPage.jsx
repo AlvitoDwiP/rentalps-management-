@@ -6,6 +6,7 @@ import ActiveTransactionPanel from "../components/ActiveTransactionPanel.jsx";
 import AddItemModal from "../components/AddItemModal.jsx";
 import DashboardHeader from "../components/DashboardHeader.jsx";
 import FinishTransactionModal from "../components/FinishTransactionModal.jsx";
+import MoveConsoleModal from "../components/MoveConsoleModal.jsx";
 import ConsoleGrid from "../components/ConsoleGrid.jsx";
 import StartTransactionModal from "../components/StartTransactionModal.jsx";
 import SummaryCards from "../components/SummaryCards.jsx";
@@ -24,6 +25,8 @@ function DashboardPage() {
   const [selectedConsole, setSelectedConsole] = useState(null);
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [selectedAddItemTransaction, setSelectedAddItemTransaction] = useState(null);
+  const [selectedMoveConsoleTransaction, setSelectedMoveConsoleTransaction] =
+    useState(null);
 
   const consolesQuery = useQuery({
     queryKey: ["consoles"],
@@ -120,15 +123,25 @@ function DashboardPage() {
         <div className="grid gap-5 xl:grid-cols-[1.45fr_0.95fr]">
           <ConsoleGrid
             consoles={consoles}
-            isLoading={consolesQuery.isLoading}
+            activeTransactions={activeTransactions}
+            isLoading={consolesQuery.isLoading && consoles.length === 0}
+            isError={consolesQuery.isError && consoles.length === 0}
+            onRetry={() => consolesQuery.refetch()}
             onSelectConsole={setSelectedConsole}
           />
 
           <ActiveTransactionPanel
             transactions={activeTransactions}
-            isLoading={activeTransactionsQuery.isLoading}
+            isLoading={
+              activeTransactionsQuery.isLoading && activeTransactions.length === 0
+            }
+            isError={
+              activeTransactionsQuery.isError && activeTransactions.length === 0
+            }
+            onRetry={() => activeTransactionsQuery.refetch()}
             onFinish={setSelectedTransaction}
             onAddItem={setSelectedAddItemTransaction}
+            onMoveConsole={setSelectedMoveConsoleTransaction}
           />
         </div>
       </div>
@@ -154,6 +167,12 @@ function DashboardPage() {
       <AddItemModal
         transaction={selectedAddItemTransaction}
         onClose={() => setSelectedAddItemTransaction(null)}
+      />
+
+      <MoveConsoleModal
+        transaction={selectedMoveConsoleTransaction}
+        consoles={consoles}
+        onClose={() => setSelectedMoveConsoleTransaction(null)}
       />
     </main>
   );

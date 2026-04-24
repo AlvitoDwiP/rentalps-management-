@@ -1,15 +1,18 @@
 import { LogOut, RadioTower, UserCircle2 } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import useAuthStore from "../store/authStore.js";
 
 function DashboardHeader() {
+  const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const clearAuth = useAuthStore((state) => state.clearAuth);
 
   function handleLogout() {
     clearAuth();
     toast.success("Sesi berhasil diakhiri.");
+    navigate("/login", { replace: true });
   }
 
   return (

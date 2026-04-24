@@ -9,6 +9,8 @@ import {
   getProducts,
 } from "../lib/api.js";
 import { formatRupiah } from "../lib/format.js";
+import EmptyState from "./EmptyState.jsx";
+import ErrorState from "./ErrorState.jsx";
 
 function AddItemModal({ transaction, onClose }) {
   const queryClient = useQueryClient();
@@ -119,7 +121,7 @@ function AddItemModal({ transaction, onClose }) {
   async function handleSubmit(event) {
     event.preventDefault();
 
-    if (selectedEntries.length === 0) {
+    if (selectedEntries.length === 0 || addItemsMutation.isPending) {
       return;
     }
 
@@ -180,13 +182,22 @@ function AddItemModal({ transaction, onClose }) {
                   />
                 ))}
               </div>
+            ) : productsQuery.isError ? (
+              <ErrorState
+                title="Produk gagal dimuat"
+                description="Daftar produk belum bisa diambil saat ini. Coba muat ulang lagi."
+                retryLabel="Retry Produk"
+                onRetry={() => productsQuery.refetch()}
+                className="border-white/10 bg-rose-500/10"
+              />
             ) : products.length === 0 ? (
-              <div className="rounded-[1.75rem] border border-dashed border-white/15 bg-white/[0.03] px-5 py-10 text-center">
-                <p className="text-lg font-semibold text-white">Belum ada produk aktif</p>
-                <p className="mt-2 text-sm leading-6 text-slate-400">
-                  Tambahkan produk dulu dari admin panel sebelum kasir menjual item.
-                </p>
-              </div>
+              <EmptyState
+                title="Belum ada produk aktif"
+                description="Tambahkan produk dulu dari admin panel sebelum kasir menjual item."
+                className="border-white/15 bg-white/[0.03]"
+                titleClassName="text-white"
+                descriptionClassName="text-slate-400"
+              />
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
                 {products.map((product) => {
@@ -283,9 +294,13 @@ function AddItemModal({ transaction, onClose }) {
 
             <div className="mt-5 space-y-3">
               {selectedEntries.length === 0 ? (
-                <div className="rounded-[1.5rem] border border-dashed border-white/10 bg-slate-950/60 px-4 py-5 text-sm text-slate-400">
-                  Belum ada produk dipilih.
-                </div>
+                <EmptyState
+                  title="Belum ada produk dipilih"
+                  description="Klik produk di sebelah kiri untuk menambahkan item ke transaksi."
+                  className="border-white/10 bg-slate-950/60"
+                  titleClassName="text-white"
+                  descriptionClassName="text-slate-400"
+                />
               ) : (
                 selectedEntries.map((item) => (
                   <div
@@ -322,7 +337,8 @@ function AddItemModal({ transaction, onClose }) {
                 disabled={
                   addItemsMutation.isPending ||
                   selectedEntries.length === 0 ||
-                  productsQuery.isLoading
+                  productsQuery.isLoading ||
+                  productsQuery.isError
                 }
                 className="rounded-2xl bg-orange-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-60"
               >

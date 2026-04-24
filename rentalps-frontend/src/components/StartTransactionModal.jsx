@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { BadgeDollarSign, Clock3, X } from "lucide-react";
+import EmptyState from "./EmptyState.jsx";
 
 function StartTransactionModal({
   consoleUnit,
@@ -37,6 +38,10 @@ function StartTransactionModal({
   function handleSubmit(event) {
     event.preventDefault();
 
+    if (isSubmitting) {
+      return;
+    }
+
     if (mode === "PACKAGE") {
       onSubmit({
         mode,
@@ -73,7 +78,8 @@ function StartTransactionModal({
           <button
             type="button"
             onClick={onClose}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 text-slate-500 transition hover:bg-slate-50"
+            disabled={isSubmitting}
+            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             <X className="h-5 w-5" />
           </button>
@@ -84,11 +90,12 @@ function StartTransactionModal({
             <button
               type="button"
               onClick={() => setMode("OPEN")}
+              disabled={isSubmitting}
               className={`rounded-[1.5rem] border px-4 py-4 text-left transition ${
                 mode === "OPEN"
                   ? "border-slate-950 bg-slate-950 text-white"
                   : "border-slate-200 bg-slate-50 text-slate-700"
-              }`}
+              } disabled:cursor-not-allowed disabled:opacity-60`}
             >
               <div className="flex items-center gap-3">
                 <Clock3 className="h-5 w-5" />
@@ -102,11 +109,12 @@ function StartTransactionModal({
             <button
               type="button"
               onClick={() => setMode("PACKAGE")}
+              disabled={isSubmitting}
               className={`rounded-[1.5rem] border px-4 py-4 text-left transition ${
                 mode === "PACKAGE"
                   ? "border-orange-500 bg-orange-500 text-white"
                   : "border-slate-200 bg-slate-50 text-slate-700"
-              }`}
+              } disabled:cursor-not-allowed disabled:opacity-60`}
             >
               <div className="flex items-center gap-3">
                 <BadgeDollarSign className="h-5 w-5" />
@@ -124,6 +132,7 @@ function StartTransactionModal({
               type="text"
               value={customerName}
               onChange={(event) => setCustomerName(event.target.value)}
+              disabled={isSubmitting}
               placeholder="Opsional, contoh: Budi"
               className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
             />
@@ -140,9 +149,11 @@ function StartTransactionModal({
 
               <div className="grid gap-3">
                 {filteredPackages.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm text-slate-500">
-                    Belum ada package aktif untuk {consoleUnit.consoleType}.
-                  </div>
+                  <EmptyState
+                    title="Belum ada package aktif"
+                    description={`Belum ada package aktif untuk ${consoleUnit.consoleType}.`}
+                    className="rounded-2xl"
+                  />
                 ) : (
                   filteredPackages.map((item) => (
                     <label
@@ -168,6 +179,7 @@ function StartTransactionModal({
                           type="radio"
                           name="packageId"
                           checked={packageId === item.id}
+                          disabled={isSubmitting}
                           onChange={() => setPackageId(item.id)}
                         />
                       </div>
@@ -182,6 +194,7 @@ function StartTransactionModal({
             <button
               type="button"
               onClick={onClose}
+              disabled={isSubmitting}
               className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
             >
               Batal
