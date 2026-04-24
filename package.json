@@ -8,6 +8,7 @@
     "start": "node src/server.js",
     "prisma:migrate": "npx prisma migrate dev",
     "prisma:pull": "npx prisma db pull",
+    "prisma:seed": "node prisma/seed.js",
     "prisma:studio": "npx prisma studio",
     "prisma:generate": "npx prisma generate",
     "prisma:test": "node scripts/test-prisma-connection.js"
