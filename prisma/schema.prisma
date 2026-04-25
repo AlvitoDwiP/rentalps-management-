@@ -131,8 +131,10 @@ model Transaction {
   durationMinutes         Int?
   extraTimeMinutes        Int                @default(0)
   hourlyRateSnapshot      Decimal            @db.Decimal(10, 2)
+  packageNameSnapshot     String?
   packagePriceSnapshot    Decimal?           @db.Decimal(10, 2)
   packageDurationSnapshot Int?
+  packageDurationMinutesSnapshot Int?
   rentalTotal             Int                @default(0)
   productTotal            Int                @default(0)
   grandTotal              Int                @default(0)

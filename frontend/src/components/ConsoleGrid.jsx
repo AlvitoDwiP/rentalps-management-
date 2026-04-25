@@ -55,15 +55,24 @@ function ConsoleGrid({
   }, [consoles]);
 
   return (
-    <section className="dashboard-panel overflow-hidden">
+    <section className="dashboard-panel overflow-hidden console-grid-panel">
       <div
         className="border-b px-5 py-4 sm:px-6"
         style={{ borderColor: theme.colors.border }}
       >
-        <h2 className="text-2xl font-semibold text-[var(--color-text)]">Console</h2>
-        <p className="mt-1 text-sm text-[var(--color-muted)]">
-          Klik console yang available untuk mulai transaksi baru.
-        </p>
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="text-[2.15rem] font-semibold tracking-[-0.05em] text-[var(--color-text)]">
+              Console
+            </h2>
+            <p className="mt-1 text-sm text-[var(--color-muted)]">
+              Klik console yang available untuk mulai transaksi baru.
+            </p>
+          </div>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--color-muted)]">
+            {consoles.length} Unit Tersedia di Dashboard
+          </p>
+        </div>
       </div>
 
       <div className="p-5 sm:p-6">

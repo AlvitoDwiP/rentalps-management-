@@ -6,6 +6,7 @@ import AdminPackagesPage from "./pages/admin/AdminPackagesPage.jsx";
 import AdminProductsPage from "./pages/admin/AdminProductsPage.jsx";
 import AdminRatesPage from "./pages/admin/AdminRatesPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
+import HistoryPage from "./pages/HistoryPage.jsx";
 import AdminRoute from "./routes/AdminRoute.jsx";
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
 import useAuthStore from "./store/authStore.js";
@@ -31,6 +32,14 @@ function App() {
         element={
           <ProtectedRoute>
             <DashboardPage />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/history"
+        element={
+          <ProtectedRoute>
+            <HistoryPage />
           </ProtectedRoute>
         }
       />

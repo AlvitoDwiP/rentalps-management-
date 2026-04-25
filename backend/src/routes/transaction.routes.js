@@ -2,6 +2,7 @@ const express = require("express");
 
 const {
   listActiveTransactions,
+  listTransactionHistory,
   createOpenTransaction,
   createPackageTransaction,
   createTransactionItem,
@@ -15,6 +16,7 @@ const router = express.Router();
 
 router.use(authenticate, authorizeRoles("ADMIN", "CASHIER"));
 router.get("/active", listActiveTransactions);
+router.get("/history", listTransactionHistory);
 router.post("/open", createOpenTransaction);
 router.post("/package", createPackageTransaction);
 router.post("/:transactionId/items", createTransactionItem);

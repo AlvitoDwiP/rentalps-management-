@@ -16,6 +16,34 @@ function getStatusMeta(status) {
   return { icon: Wrench };
 }
 
+function getPackageSecondaryLabel(activeTransaction) {
+  if (!activeTransaction) {
+    return null;
+  }
+
+  if (activeTransaction.packageNameSnapshot) {
+    return activeTransaction.packageNameSnapshot;
+  }
+
+  const durationMinutes =
+    activeTransaction.packageDurationMinutesSnapshot ??
+    activeTransaction.packageDurationSnapshot;
+
+  if (!durationMinutes) {
+    return "PACKAGE";
+  }
+
+  return `${durationMinutes} menit`;
+}
+
+function getModeLabel(activeTransaction) {
+  if (!activeTransaction) {
+    return null;
+  }
+
+  return activeTransaction.pricingType === "PACKAGE" ? "PACKAGE" : "OPEN";
+}
+
 function ConsoleCard({
   consoleUnit,
   activeTransaction,
@@ -32,6 +60,11 @@ function ConsoleCard({
   const isAvailable = consoleUnit.status === "AVAILABLE";
   const isInUse = consoleUnit.status === "IN_USE" && activeTransaction;
   const isMaintenance = consoleUnit.status === "MAINTENANCE";
+  const isPackage = activeTransaction?.pricingType === "PACKAGE";
+  const packageSecondaryLabel = isPackage
+    ? getPackageSecondaryLabel(activeTransaction)
+    : null;
+  const modeLabel = isInUse ? getModeLabel(activeTransaction) : null;
   const cardStateClass = isInUse
     ? "console-card--in-use"
     : isMaintenance
@@ -88,7 +121,8 @@ function ConsoleCard({
       {isInUse ? (
         <div className="console-card__body mt-4">
           <div className="console-card__meta">
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="status-badge status-badge--in-use">IN_USE</span>
               <span
                 className={
                   activeTransaction.pricingType === "PACKAGE"
@@ -96,35 +130,51 @@ function ConsoleCard({
                     : "mode-badge mode-badge--open"
                 }
               >
-              {activeTransaction.pricingType}
+                {modeLabel}
               </span>
+              {estimate.isPackageExpired ? (
+                <span className="status-badge status-badge--expired">WAKTU HABIS</span>
+              ) : null}
             </div>
+            {isPackage && packageSecondaryLabel ? (
+              <p className="console-card__package-label mt-3 truncate text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-muted)]">
+                {packageSecondaryLabel}
+              </p>
+            ) : null}
 
-            <p className="font-display-number console-timer console-timer--active mt-4 font-semibold text-[var(--color-text)]">
-              {formatClockDuration(estimate.elapsedSeconds)}
-            </p>
-            <p className="mt-3 truncate text-[0.98rem] text-[var(--color-text)]">
-              {activeTransaction.customerName || "Walk-in Customer"}
-            </p>
+            <div className="console-card__timer-wrap">
+              <p className="font-display-number console-timer console-timer--active font-semibold text-[var(--color-text)]">
+                {formatClockDuration(estimate.displayElapsedSeconds)}
+              </p>
+            </div>
           </div>
 
           <div className="console-card__footer">
-            <p className="font-display-number truncate text-xs text-[var(--color-muted)]">
-              Est. {formatRupiah(estimate.estimatedGrandTotal)}
+            <p className="text-[11px] uppercase tracking-[0.12em] text-[var(--color-muted)]">
+              Est. total
+            </p>
+            <p className="font-display-number truncate text-sm text-[var(--color-text)]">
+              {formatRupiah(estimate.estimatedGrandTotal)}
             </p>
           </div>
         </div>
       ) : null}
 
       {isAvailable ? (
-        <div className="console-card__footer">
-          <p className="text-sm text-[var(--color-muted)]">Klik mulai</p>
+        <div className="console-card__body mt-4">
+          <div className="console-card__meta" />
+          <div className="console-card__footer">
+            <p className="text-sm text-[var(--color-muted)]">Klik mulai</p>
+          </div>
         </div>
       ) : null}
 
       {isMaintenance ? (
-        <div className="console-card__footer">
-          <p className="text-sm text-[var(--color-muted)]">Tidak tersedia</p>
+        <div className="console-card__body mt-4">
+          <div className="console-card__meta" />
+          <div className="console-card__footer">
+            <p className="text-sm text-[var(--color-muted)]">Tidak tersedia</p>
+          </div>
         </div>
       ) : null}
     </article>

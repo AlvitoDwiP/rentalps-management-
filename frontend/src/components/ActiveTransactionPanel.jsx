@@ -12,8 +12,26 @@ function getPricingBadgeClass(pricingType) {
   return pricingType === "PACKAGE" ? "mode-badge mode-badge--package" : "mode-badge mode-badge--open";
 }
 
+function getPackageLabel(transaction) {
+  return transaction.packageNameSnapshot || "PACKAGE";
+}
+
+function getPackageDurationLabel(transaction) {
+  const durationMinutes =
+    transaction.packageDurationMinutesSnapshot ?? transaction.packageDurationSnapshot;
+
+  if (!durationMinutes) {
+    return "-";
+  }
+
+  return `${durationMinutes} menit`;
+}
+
 function TransactionListItem({ transaction, isSelected, onSelect, now }) {
   const estimate = getTransactionEstimate(transaction, now);
+  const isPackage = transaction.pricingType === "PACKAGE";
+  const packageLabel = isPackage ? getPackageLabel(transaction) : null;
+  const packageDurationLabel = isPackage ? getPackageDurationLabel(transaction) : null;
 
   return (
     <button
@@ -32,10 +50,19 @@ function TransactionListItem({ transaction, isSelected, onSelect, now }) {
             <span className={getPricingBadgeClass(transaction.pricingType)}>
               {transaction.pricingType}
             </span>
+            {estimate.isPackageExpired ? (
+              <span className="status-badge status-badge--expired">WAKTU HABIS</span>
+            ) : null}
           </div>
           <p className="font-display-number mt-3 text-[2.15rem] font-semibold leading-none text-[var(--color-text)]">
-            {formatClockDuration(estimate.elapsedSeconds)}
+            {formatClockDuration(estimate.displayElapsedSeconds)}
           </p>
+          {isPackage ? (
+            <p className="mt-3 truncate text-sm font-semibold uppercase tracking-[0.08em] text-[var(--color-muted)]">
+              {packageLabel}
+              {packageDurationLabel !== "-" ? ` • ${packageDurationLabel}` : ""}
+            </p>
+          ) : null}
           <p className="mt-3 truncate text-[1.05rem] text-[var(--color-text)]">
             {transaction.customerName || "Walk-in Customer"}
           </p>
@@ -77,6 +104,9 @@ function TransactionDetail({
 
   const items = transaction.items || [];
   const estimate = getTransactionEstimate(transaction, now);
+  const isPackage = transaction.pricingType === "PACKAGE";
+  const packageLabel = isPackage ? getPackageLabel(transaction) : null;
+  const packageDurationLabel = isPackage ? getPackageDurationLabel(transaction) : null;
 
   return (
     <div>
@@ -84,6 +114,25 @@ function TransactionDetail({
         <div>
           <p className="text-[1.05rem] font-semibold uppercase tracking-[0.12em] text-[var(--color-muted)]">
             Detail #{transaction.code || transaction.id.slice(0, 8)}
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className={getPricingBadgeClass(transaction.pricingType)}>
+              {transaction.pricingType}
+            </span>
+            {isPackage && packageLabel ? (
+              <span className="mode-badge mode-badge--package">{packageLabel}</span>
+            ) : null}
+            {estimate.isPackageExpired ? (
+              <span className="status-badge status-badge--expired">WAKTU HABIS</span>
+            ) : null}
+          </div>
+          {isPackage && packageDurationLabel ? (
+            <p className="mt-3 text-sm text-[var(--color-muted)]">
+              Durasi paket {packageDurationLabel}
+            </p>
+          ) : null}
+          <p className="font-display-number mt-3 text-[2.15rem] font-semibold leading-none text-[var(--color-text)]">
+            {formatClockDuration(estimate.displayElapsedSeconds)}
           </p>
         </div>
       </div>
@@ -122,7 +171,7 @@ function TransactionDetail({
 
         <div className="space-y-3 pt-2 text-[1.05rem]">
           <div className="flex items-center justify-between gap-3 text-[var(--color-muted)]">
-            <span>Rental (est.)</span>
+            <span>{isPackage ? "Harga paket" : "Rental (est.)"}</span>
             <span className="font-display-number text-[var(--color-text)]">
               {formatRupiah(estimate.estimatedRentalTotal)}
             </span>
@@ -141,6 +190,11 @@ function TransactionDetail({
               {formatRupiah(estimate.estimatedGrandTotal)}
             </span>
           </div>
+          {estimate.isPackageExpired ? (
+            <p className="text-sm text-[var(--color-maintenance)]">
+              Waktu paket sudah habis. Billing rental berhenti, tetapi item produk masih bisa ditambahkan.
+            </p>
+          ) : null}
         </div>
       </div>
 

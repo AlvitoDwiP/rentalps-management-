@@ -16,6 +16,10 @@ import useNow from "../hooks/useNow.js";
 import { getTransactionEstimate } from "../lib/billingEstimate.js";
 import { theme } from "../lib/theme.js";
 
+function getPackageLabel(transaction) {
+  return transaction.packageNameSnapshot || "PACKAGE";
+}
+
 function FinishTransactionModal({ transaction, isSubmitting, onClose, onConfirm }) {
   const now = useNow(1000);
 
@@ -28,6 +32,11 @@ function FinishTransactionModal({ transaction, isSubmitting, onClose, onConfirm 
   const productTotal = estimate.productTotal;
   const grandTotalPreview = estimate.estimatedGrandTotal;
   const items = transaction.items || [];
+  const isPackage = transaction.pricingType === "PACKAGE";
+  const packageDurationMinutes =
+    transaction.packageDurationMinutesSnapshot ?? transaction.packageDurationSnapshot;
+  const packageDurationSeconds = packageDurationMinutes ? packageDurationMinutes * 60 : 0;
+  const packageLabel = isPackage ? getPackageLabel(transaction) : null;
 
   return (
     <div
@@ -117,7 +126,7 @@ function FinishTransactionModal({ transaction, isSubmitting, onClose, onConfirm 
                   <div>
                     <p className="text-sm text-[var(--color-muted)]">Durasi</p>
                     <p className="font-display-number text-2xl font-semibold text-[var(--color-text)]">
-                      {formatClockDuration(estimate.elapsedSeconds)}
+                      {formatClockDuration(estimate.displayElapsedSeconds)}
                     </p>
                     <p className="text-sm text-[var(--color-muted)]">
                       Mulai {formatDateTime(transaction.startTime)}
@@ -183,7 +192,9 @@ function FinishTransactionModal({ transaction, isSubmitting, onClose, onConfirm 
                     <div>
                       <p className="text-sm text-[var(--color-muted)]">Mode transaksi</p>
                       <p className="text-lg font-semibold text-[var(--color-text)]">
-                        {transaction.pricingType}
+                        {isPackage && packageLabel
+                          ? `${transaction.pricingType} • ${packageLabel}`
+                          : transaction.pricingType}
                       </p>
                     </div>
                   </div>
@@ -313,17 +324,41 @@ function FinishTransactionModal({ transaction, isSubmitting, onClose, onConfirm 
                 <div className="flex items-center justify-between gap-3">
                   <span>Durasi berjalan</span>
                   <span className="font-display-number font-medium text-[var(--color-text)]">
-                    {formatClockDuration(estimate.elapsedSeconds)}
+                    {formatClockDuration(estimate.displayElapsedSeconds)}
                   </span>
                 </div>
+                {isPackage && packageDurationSeconds > 0 ? (
+                  <div className="flex items-center justify-between gap-3">
+                    <span>Durasi paket</span>
+                    <span className="font-display-number font-medium text-[var(--color-text)]">
+                      {formatClockDuration(packageDurationSeconds)}
+                    </span>
+                  </div>
+                ) : null}
+                {isPackage ? (
+                  <div className="flex items-center justify-between gap-3">
+                    <span>Durasi aktual</span>
+                    <span className="font-display-number font-medium text-[var(--color-text)]">
+                      {formatClockDuration(estimate.elapsedSeconds)}
+                    </span>
+                  </div>
+                ) : null}
                 <div className="flex items-center justify-between gap-3">
                   <span>Tipe transaksi</span>
                   <span className="font-semibold text-[var(--color-text)]">
                     {transaction.pricingType}
                   </span>
                 </div>
+                {isPackage && packageLabel ? (
+                  <div className="flex items-center justify-between gap-3">
+                    <span>Nama paket</span>
+                    <span className="font-medium text-[var(--color-text)]">
+                      {packageLabel}
+                    </span>
+                  </div>
+                ) : null}
                 <div className="flex items-center justify-between gap-3">
-                  <span>Rental total</span>
+                  <span>{isPackage ? "Harga paket" : "Rental total"}</span>
                   <span className="font-display-number font-medium text-[var(--color-text)]">
                     {formatRupiah(rentalTotalPreview)}
                   </span>
@@ -375,7 +410,13 @@ function FinishTransactionModal({ transaction, isSubmitting, onClose, onConfirm 
               <button
                 type="button"
                 disabled={isSubmitting}
-                onClick={onConfirm}
+                onClick={() => {
+                  if (isSubmitting) {
+                    return;
+                  }
+
+                  onConfirm();
+                }}
                 className={`app-button ${
                   isSubmitting ? "app-button--disabled" : "app-button--danger"
                 }`}

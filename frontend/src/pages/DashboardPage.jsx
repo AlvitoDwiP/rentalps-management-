@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import ActiveTransactionPanel from "../components/ActiveTransactionPanel.jsx";
@@ -11,6 +12,7 @@ import MoveConsoleModal from "../components/MoveConsoleModal.jsx";
 import StartTransactionModal from "../components/StartTransactionModal.jsx";
 import SummaryCards from "../components/SummaryCards.jsx";
 import useDashboardShortcuts from "../hooks/useDashboardShortcuts.js";
+import useNow from "../hooks/useNow.js";
 import {
   finishTransactionRequest,
   getActiveTransactions,
@@ -21,11 +23,27 @@ import {
   startOpenTransactionRequest,
   startPackageTransactionRequest,
 } from "../lib/api.js";
+import { getTransactionEstimate } from "../lib/billingEstimate.js";
+import useAuthStore from "../store/authStore.js";
+
+function formatFooterDateTime(now) {
+  return new Date(now).toLocaleString("id-ID", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+}
 
 function DashboardPage() {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const user = useAuthStore((state) => state.user);
   const consoleSectionRef = useRef(null);
   const activeTransactionsSectionRef = useRef(null);
+  const notifiedExpiredTransactionIdsRef = useRef(new Set());
   const [isTransactionPanelOpen, setIsTransactionPanelOpen] = useState(true);
   const [selectedConsole, setSelectedConsole] = useState(null);
   const [selectedTransactionId, setSelectedTransactionId] = useState(null);
@@ -33,6 +51,7 @@ function DashboardPage() {
   const [selectedAddItemTransaction, setSelectedAddItemTransaction] = useState(null);
   const [selectedMoveConsoleTransaction, setSelectedMoveConsoleTransaction] =
     useState(null);
+  const now = useNow(1000);
 
   const consolesQuery = useQuery({
     queryKey: ["consoles"],
@@ -92,6 +111,8 @@ function DashboardPage() {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["consoles"] }),
         queryClient.invalidateQueries({ queryKey: ["active-transactions"] }),
+        queryClient.invalidateQueries({ queryKey: ["today-summary"] }),
+        queryClient.invalidateQueries({ queryKey: ["transaction-history"] }),
       ]);
     },
     onError: (error) => toast.error(getApiErrorMessage(error)),
@@ -122,6 +143,34 @@ function DashboardPage() {
       setSelectedTransactionId(activeTransactions[0].id);
     }
   }, [activeTransactions, selectedTransactionId]);
+
+  useEffect(() => {
+    const activeTransactionIds = new Set(activeTransactions.map((transaction) => transaction.id));
+    const notifiedIds = notifiedExpiredTransactionIdsRef.current;
+
+    Array.from(notifiedIds).forEach((transactionId) => {
+      if (!activeTransactionIds.has(transactionId)) {
+        notifiedIds.delete(transactionId);
+      }
+    });
+
+    activeTransactions.forEach((transaction) => {
+      if (transaction.pricingType !== "PACKAGE") {
+        return;
+      }
+
+      const estimate = getTransactionEstimate(transaction, now);
+
+      if (!estimate.isPackageExpired || notifiedIds.has(transaction.id)) {
+        return;
+      }
+
+      notifiedIds.add(transaction.id);
+      toast.info(
+        `Waktu paket ${transaction.playStationUnit?.code || "console"} sudah habis. Silakan selesaikan transaksi.`,
+      );
+    });
+  }, [activeTransactions, now]);
 
   const selectedTransaction = useMemo(
     () =>
@@ -215,7 +264,7 @@ function DashboardPage() {
   }
 
   function handleHistoryClick() {
-    toast.info("Fitur riwayat belum tersedia");
+    navigate("/history");
   }
 
   function handleSelectConsole(consoleUnit) {
@@ -228,8 +277,9 @@ function DashboardPage() {
 
   return (
     <main className="dashboard-shell">
-      <div className="mx-auto flex max-w-[1480px] flex-col gap-5">
+      <div className="mx-auto flex w-full max-w-[1760px] flex-col gap-5">
         <DashboardHeader
+          user={user}
           activeTransactionCount={activeTransactions.length}
           isTransactionPanelOpen={isTransactionPanelOpen}
           onDashboardClick={handleDashboardClick}
@@ -286,6 +336,17 @@ function DashboardPage() {
             />
           </div>
         </div>
+
+        <footer className="dashboard-footer">
+          <p className="text-sm text-[var(--color-muted)]">Rental PS Management System</p>
+          <div className="flex flex-wrap items-center justify-end gap-4 text-sm text-[var(--color-muted)]">
+            <span className="font-display-number">{formatFooterDateTime(now)}</span>
+            <span className="dashboard-footer__status">
+              <span className="dashboard-footer__status-dot" />
+              Online
+            </span>
+          </div>
+        </footer>
       </div>
 
       <StartTransactionModal

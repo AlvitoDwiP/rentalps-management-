@@ -32,6 +32,10 @@ api.interceptors.response.use(
 );
 
 export function getApiErrorMessage(error) {
+  if (error.response?.status === 502) {
+    return "Backend tidak merespons dengan benar. Coba lagi beberapa saat.";
+  }
+
   return error.response?.data?.message || error.message || "Terjadi kesalahan.";
 }
 
@@ -68,6 +72,21 @@ export async function getActiveTransactions() {
 export async function getTodaySummary() {
   const response = await api.get("/reports/today-summary");
   return response.data.data;
+}
+
+export async function getTransactionHistory(params = {}) {
+  const response = await api.get("/transactions/history", {
+    params,
+  });
+
+  return {
+    items: response.data.data.items || [],
+    pagination: response.data.data.pagination || {
+      page: 1,
+      limit: Number(params.limit || 20),
+      count: 0,
+    },
+  };
 }
 
 export async function startOpenTransactionRequest(payload) {

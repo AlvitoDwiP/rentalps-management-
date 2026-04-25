@@ -17,13 +17,25 @@ export function getElapsedSeconds(startTime, now = Date.now()) {
   return Math.floor(diffMs / 1000);
 }
 
+export function getPackageDurationSeconds(transaction) {
+  const packageDurationMinutes = toNumber(
+    transaction?.packageDurationMinutesSnapshot ?? transaction?.packageDurationSnapshot,
+  );
+
+  if (!packageDurationMinutes) {
+    return 0;
+  }
+
+  return packageDurationMinutes * 60;
+}
+
 export function getEstimatedRentalTotal(transaction, now = Date.now()) {
   if (!transaction) {
     return 0;
   }
 
   if (transaction.pricingType === "PACKAGE") {
-    return toNumber(transaction.packagePriceSnapshot || transaction.rentalTotal);
+    return toNumber(transaction.packagePriceSnapshot ?? transaction.rentalTotal);
   }
 
   const elapsedSeconds = getElapsedSeconds(transaction.startTime, now);
@@ -45,11 +57,23 @@ export function getEstimatedGrandTotal(transaction, now = Date.now()) {
 
 export function getTransactionEstimate(transaction, now = Date.now()) {
   const elapsedSeconds = getElapsedSeconds(transaction?.startTime, now);
+  const packageDurationSeconds = getPackageDurationSeconds(transaction);
+  const isPackageExpired =
+    transaction?.pricingType === "PACKAGE" &&
+    packageDurationSeconds > 0 &&
+    elapsedSeconds >= packageDurationSeconds;
+  const displayElapsedSeconds =
+    transaction?.pricingType === "PACKAGE" && packageDurationSeconds > 0
+      ? Math.min(elapsedSeconds, packageDurationSeconds)
+      : elapsedSeconds;
   const estimatedRentalTotal = getEstimatedRentalTotal(transaction, now);
   const productTotal = toNumber(transaction?.productTotal);
 
   return {
     elapsedSeconds,
+    displayElapsedSeconds,
+    packageDurationSeconds,
+    isPackageExpired,
     estimatedRentalTotal,
     productTotal,
     estimatedGrandTotal: estimatedRentalTotal + productTotal,

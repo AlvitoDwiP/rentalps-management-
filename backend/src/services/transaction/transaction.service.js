@@ -64,17 +64,46 @@ function calculateProductTotal(items = []) {
   return total.toNumber();
 }
 
+function getPackageDurationMinutesSnapshot(transaction) {
+  return (
+    transaction?.packageDurationMinutesSnapshot ??
+    transaction?.packageDurationSnapshot ??
+    null
+  );
+}
+
+function getPackageNameSnapshot(transaction) {
+  return transaction?.packageNameSnapshot ?? null;
+}
+
+function getPackageRentalTotal(transaction) {
+  if (!transaction) {
+    return 0;
+  }
+
+  if (transaction.packagePriceSnapshot !== undefined && transaction.packagePriceSnapshot !== null) {
+    return new Prisma.Decimal(transaction.packagePriceSnapshot).toNumber();
+  }
+
+  return Number(transaction.rentalTotal || 0);
+}
+
 function enrichTransaction(transaction) {
+  const packageDurationMinutesSnapshot = getPackageDurationMinutesSnapshot(transaction);
+  const packageNameSnapshot = getPackageNameSnapshot(transaction);
   const expectedEndTime =
-    transaction.pricingType === "PACKAGE" && transaction.packageDurationSnapshot
+    transaction.pricingType === "PACKAGE" && packageDurationMinutesSnapshot
       ? new Date(
           new Date(transaction.startTime).getTime() +
-            transaction.packageDurationSnapshot * 60000,
+            packageDurationMinutesSnapshot * 60000,
         )
       : null;
 
   return {
     ...normalizeDecimalFields(transaction),
+    packageId: transaction.rentalPackageId || null,
+    packageNameSnapshot,
+    packageDurationMinutesSnapshot,
     expectedEndTime,
   };
 }
@@ -280,6 +309,51 @@ function sanitizeTransactionResponse(transaction) {
   };
 }
 
+function getJakartaDateRange(dateValue) {
+  const jakartaOffsetMs = 7 * 60 * 60 * 1000;
+  const baseDate = dateValue ? new Date(`${dateValue}T00:00:00+07:00`) : new Date();
+
+  if (Number.isNaN(baseDate.getTime())) {
+    throw createError("Parameter date tidak valid. Gunakan format YYYY-MM-DD.", 400);
+  }
+
+  const jakartaDate = new Date(baseDate.getTime() + jakartaOffsetMs);
+  const year = jakartaDate.getUTCFullYear();
+  const month = jakartaDate.getUTCMonth();
+  const date = jakartaDate.getUTCDate();
+
+  return {
+    startUtc: new Date(Date.UTC(year, month, date, 0, 0, 0, 0) - jakartaOffsetMs),
+    endUtc: new Date(Date.UTC(year, month, date + 1, 0, 0, 0, 0) - jakartaOffsetMs),
+  };
+}
+
+function toHistoryItem(transaction) {
+  return {
+    id: transaction.id,
+    console: transaction.playStationUnit
+      ? {
+          id: transaction.playStationUnit.id,
+          code: transaction.playStationUnit.code,
+          name: transaction.playStationUnit.name,
+          consoleType: transaction.playStationUnit.consoleType,
+        }
+      : null,
+    customerName: transaction.customerName,
+    pricingType: transaction.pricingType,
+    durationMinutes: transaction.durationMinutes,
+    packageId: transaction.packageId || transaction.rentalPackageId || null,
+    packageNameSnapshot: getPackageNameSnapshot(transaction),
+    packageDurationMinutesSnapshot: getPackageDurationMinutesSnapshot(transaction),
+    packagePriceSnapshot: Number(transaction.packagePriceSnapshot || 0),
+    rentalTotal: Number(transaction.rentalTotal || 0),
+    productTotal: Number(transaction.productTotal || 0),
+    grandTotal: Number(transaction.grandTotal || 0),
+    startTime: transaction.startTime,
+    endTime: transaction.endTime,
+  };
+}
+
 async function startOpenTransaction(payload = {}) {
   const extraMinutes = ensureExtraMinutesRange(
     validateExtraMinutes(payload.extraMinutes ?? 0),
@@ -320,8 +394,10 @@ async function startOpenTransaction(payload = {}) {
         durationMinutes: null,
         extraTimeMinutes: extraMinutes,
         hourlyRateSnapshot: rentalRate.hourlyRate,
+        packageNameSnapshot: null,
         packagePriceSnapshot: null,
         packageDurationSnapshot: null,
+        packageDurationMinutesSnapshot: null,
         rentalTotal: 0,
         productTotal: 0,
         grandTotal: 0,
@@ -394,8 +470,10 @@ async function startPackageTransaction(payload = {}) {
         durationMinutes: null,
         extraTimeMinutes: extraMinutes,
         hourlyRateSnapshot: rentalRate.hourlyRate,
+        packageNameSnapshot: rentalPackage.name,
         packagePriceSnapshot: rentalPackage.price,
         packageDurationSnapshot: rentalPackage.durationMinutes,
+        packageDurationMinutesSnapshot: rentalPackage.durationMinutes,
         rentalTotal: packageRentalTotal,
         productTotal: 0,
         grandTotal: packageRentalTotal,
@@ -419,7 +497,7 @@ async function finishTransaction(transactionId) {
     const rentalTotal =
       transaction.pricingType === "OPEN"
         ? calculateOpenRentalTotal(transaction.hourlyRateSnapshot, durationMinutes)
-        : transaction.rentalTotal;
+        : getPackageRentalTotal(transaction);
     const { productTotal } = await recalculateProductTotals(tx, transaction.id);
     const grandTotal = rentalTotal + productTotal;
 
@@ -523,7 +601,7 @@ async function addTransactionItem(payload = {}) {
 
     const { productTotal } = await recalculateProductTotals(tx, transaction.id);
     const rentalTotal =
-      transaction.pricingType === "PACKAGE" ? transaction.rentalTotal : 0;
+      transaction.pricingType === "PACKAGE" ? getPackageRentalTotal(transaction) : 0;
     const grandTotal = rentalTotal + productTotal;
 
     await tx.transaction.update({
@@ -618,6 +696,62 @@ async function getActiveTransactions() {
   );
 }
 
+async function getTransactionHistory(query = {}) {
+  const limit = parseNumber(query.limit ?? 20, {
+    fieldName: "limit",
+    integer: true,
+    min: 1,
+    invalidMessage: "limit harus berupa bilangan bulat minimal 1.",
+  });
+  const page = parseNumber(query.page ?? 1, {
+    fieldName: "page",
+    integer: true,
+    min: 1,
+    invalidMessage: "page harus berupa bilangan bulat minimal 1.",
+  });
+
+  const where = {
+    status: "COMPLETED",
+  };
+
+  if (query.date) {
+    const { startUtc, endUtc } = getJakartaDateRange(query.date);
+
+    where.endTime = {
+      gte: startUtc,
+      lt: endUtc,
+    };
+  }
+
+  const count = await prisma.transaction.count({ where });
+
+  const transactions = await prisma.transaction.findMany({
+    where,
+    orderBy: {
+      endTime: "desc",
+    },
+    skip: (page - 1) * limit,
+    take: limit,
+  });
+
+  const hydratedTransactions = [];
+
+  for (const transaction of transactions) {
+    hydratedTransactions.push(await getTransactionById(prisma, transaction.id));
+  }
+
+  return {
+    items: hydratedTransactions.map((transaction) =>
+      toHistoryItem(sanitizeTransactionResponse(enrichTransaction(transaction))),
+    ),
+    pagination: {
+      page,
+      limit,
+      count,
+    },
+  };
+}
+
 module.exports = {
   startOpenTransaction,
   startPackageTransaction,
@@ -625,4 +759,5 @@ module.exports = {
   addTransactionItem,
   moveTransactionConsole,
   getActiveTransactions,
+  getTransactionHistory,
 };

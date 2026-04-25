@@ -5,6 +5,7 @@ const {
   addTransactionItem,
   moveTransactionConsole,
   getActiveTransactions,
+  getTransactionHistory,
 } = require("../../services/transaction/transaction.service");
 
 async function listActiveTransactions(req, res, next) {
@@ -14,6 +15,19 @@ async function listActiveTransactions(req, res, next) {
     res.status(200).json({
       success: true,
       data: transactions,
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+async function listTransactionHistory(req, res, next) {
+  try {
+    const history = await getTransactionHistory(req.query || {});
+
+    res.status(200).json({
+      success: true,
+      data: history,
     });
   } catch (error) {
     next(error);
@@ -102,6 +116,7 @@ async function changeTransactionConsole(req, res, next) {
 
 module.exports = {
   listActiveTransactions,
+  listTransactionHistory,
   createOpenTransaction,
   createPackageTransaction,
   createTransactionItem,
