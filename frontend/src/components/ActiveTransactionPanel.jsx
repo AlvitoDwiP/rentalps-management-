@@ -1,4 +1,4 @@
-import { ArrowRightLeft, Coffee, ReceiptText } from "lucide-react";
+import { ArrowRightLeft, Coffee, ReceiptText, X } from "lucide-react";
 
 import useNow from "../hooks/useNow.js";
 import { getTransactionEstimate } from "../lib/billingEstimate.js";
@@ -179,6 +179,7 @@ function ActiveTransactionPanel({
   selectedTransaction,
   isLoading,
   isError,
+  onClose,
   onRetry,
   onSelectTransaction,
   onFinish,
@@ -194,18 +195,30 @@ function ActiveTransactionPanel({
         style={{ borderColor: theme.colors.border }}
       >
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-2xl font-semibold text-[var(--color-text)]">
-            Transaksi Aktif
-          </h2>
-          <span
-            className="inline-flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-sm font-semibold"
-            style={{
-              backgroundColor: theme.colors.inUse,
-              color: theme.colors.text,
-            }}
+          <div className="flex items-center gap-3">
+            <h2 className="text-2xl font-semibold text-[var(--color-text)]">
+              Transaksi Aktif
+            </h2>
+            <span
+              className="inline-flex h-8 min-w-8 items-center justify-center rounded-full px-2 text-sm font-semibold"
+              style={{
+                backgroundColor: theme.colors.inUse,
+                color: theme.colors.text,
+              }}
+            >
+              {transactions.length}
+            </span>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="panel-close-button"
+            aria-label="Tutup panel transaksi aktif"
+            title="Tutup panel (Esc atau D)"
           >
-            {transactions.length}
-          </span>
+            <X className="h-4 w-4" />
+          </button>
         </div>
       </div>
 

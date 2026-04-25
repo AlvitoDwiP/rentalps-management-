@@ -46,11 +46,12 @@ const cards = [
   },
 ];
 
-function SummaryCards({ summary, isLoading }) {
+function SummaryCards({ summary, isLoading, loadingKeys = [] }) {
   return (
     <section className="grid gap-4 lg:grid-cols-5">
       {cards.map((card) => {
         const Icon = card.icon;
+        const isCardLoading = isLoading || loadingKeys.includes(card.key);
 
         return (
           <article
@@ -76,7 +77,7 @@ function SummaryCards({ summary, isLoading }) {
                   className="font-display-number mt-3 text-[2rem] font-semibold leading-none"
                   style={{ color: card.color }}
                 >
-                  {isLoading ? "..." : card.formatter(summary[card.key])}
+                  {isCardLoading ? "..." : card.formatter(summary[card.key])}
                 </p>
               </div>
 

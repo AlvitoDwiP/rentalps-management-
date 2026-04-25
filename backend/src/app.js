@@ -7,6 +7,7 @@ const consoleRoutes = require("./routes/console.routes");
 const packageRoutes = require("./routes/package.routes");
 const productRoutes = require("./routes/product.routes");
 const rateRoutes = require("./routes/rate.routes");
+const reportRoutes = require("./routes/report.routes");
 const transactionRoutes = require("./routes/transaction.routes");
 
 const app = express();
@@ -60,6 +61,7 @@ app.use("/api/consoles", consoleRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/packages", packageRoutes);
 app.use("/api/rates", rateRoutes);
+app.use("/api/reports", reportRoutes);
 app.use("/api/transactions", transactionRoutes);
 
 app.use((req, res) => {

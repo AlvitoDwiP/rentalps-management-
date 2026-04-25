@@ -30,7 +30,12 @@ function FinishTransactionModal({ transaction, isSubmitting, onClose, onConfirm 
   const items = transaction.items || [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-4 backdrop-blur-sm sm:items-center">
+    <div
+      data-modal-root="true"
+      role="dialog"
+      aria-modal="true"
+      className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-4 backdrop-blur-sm sm:items-center"
+    >
       <div className="dashboard-panel w-full max-w-4xl overflow-hidden">
         <div
           className="flex items-start justify-between gap-4 border-b px-5 py-5 sm:px-6"

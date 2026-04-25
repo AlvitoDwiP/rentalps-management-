@@ -1,7 +1,7 @@
 import { MonitorPlay, Wrench, Zap } from "lucide-react";
 
 import { getTransactionEstimate } from "../lib/billingEstimate.js";
-import { formatClockDuration, formatDuration, formatRupiah } from "../lib/format.js";
+import { formatClockDuration, formatRupiah } from "../lib/format.js";
 import { getStatusClass, getStatusTheme, theme } from "../lib/theme.js";
 
 function getStatusMeta(status) {
@@ -62,7 +62,7 @@ function ConsoleCard({
       }}
     >
       <div className="flex items-start justify-between gap-3">
-        <div>
+        <div className="min-w-0">
           <h3 className="text-[2rem] font-semibold tracking-[-0.04em] text-[var(--color-text)]">
             {consoleUnit.code}
           </h3>
@@ -86,47 +86,45 @@ function ConsoleCard({
       </div>
 
       {isInUse ? (
-        <div className="mt-5 flex flex-1 flex-col">
-          <div className="flex items-center justify-between gap-3">
-            <span className={activeTransaction.pricingType === "PACKAGE" ? "mode-badge mode-badge--package" : "mode-badge mode-badge--open"}>
+        <div className="console-card__body mt-4">
+          <div className="console-card__meta">
+            <div className="flex items-center gap-3">
+              <span
+                className={
+                  activeTransaction.pricingType === "PACKAGE"
+                    ? "mode-badge mode-badge--package"
+                    : "mode-badge mode-badge--open"
+                }
+              >
               {activeTransaction.pricingType}
-            </span>
-            {activeTransaction.pricingType === "PACKAGE" ? (
-              <span className="text-sm text-[var(--color-muted)]">
-                {formatDuration(activeTransaction.packageDurationSnapshot)}
               </span>
-            ) : null}
+            </div>
+
+            <p className="font-display-number console-timer console-timer--active mt-4 font-semibold text-[var(--color-text)]">
+              {formatClockDuration(estimate.elapsedSeconds)}
+            </p>
+            <p className="mt-3 truncate text-[0.98rem] text-[var(--color-text)]">
+              {activeTransaction.customerName || "Walk-in Customer"}
+            </p>
           </div>
 
-          <p className="font-display-number console-timer console-timer--active mt-5 font-semibold text-[var(--color-text)]">
-            {formatClockDuration(estimate.elapsedSeconds)}
-          </p>
-          <p className="mt-4 truncate text-[1.02rem] text-[var(--color-text)]">
-            {activeTransaction.customerName || "Walk-in Customer"}
-          </p>
-          <p className="font-display-number mt-auto pt-4 text-sm text-[var(--color-muted)]">
-            Est. {formatRupiah(estimate.estimatedGrandTotal)}
-          </p>
+          <div className="console-card__footer">
+            <p className="font-display-number truncate text-xs text-[var(--color-muted)]">
+              Est. {formatRupiah(estimate.estimatedGrandTotal)}
+            </p>
+          </div>
         </div>
       ) : null}
 
       {isAvailable ? (
-        <div className="mt-auto pt-6">
-          <p className="text-sm text-[var(--color-muted)]">Klik untuk mulai transaksi</p>
+        <div className="console-card__footer">
+          <p className="text-sm text-[var(--color-muted)]">Klik mulai</p>
         </div>
       ) : null}
 
       {isMaintenance ? (
-        <div className="mt-5 flex-1">
-          <div
-            className="rounded-[10px] border p-3 text-sm text-[var(--color-muted)]"
-            style={{
-              borderColor: theme.colors.border,
-              backgroundColor: theme.colors.surface,
-            }}
-          >
-            {consoleUnit.notes || "Console sedang maintenance."}
-          </div>
+        <div className="console-card__footer">
+          <p className="text-sm text-[var(--color-muted)]">Tidak tersedia</p>
         </div>
       ) : null}
     </article>

@@ -5,9 +5,12 @@ import { toast } from "sonner";
 import { theme } from "../lib/theme.js";
 import useAuthStore from "../store/authStore.js";
 
-function NavItem({ icon: Icon, label, isActive = false, badge }) {
+function NavItem({ icon: Icon, label, isActive = false, badge, onClick, title }) {
   return (
-    <div
+    <button
+      type="button"
+      onClick={onClick}
+      title={title}
       className="header-nav-item inline-flex items-center gap-2 rounded-[12px] border px-4 py-3 text-sm font-semibold"
       style={{
         borderColor: isActive ? theme.colors.border : "transparent",
@@ -28,11 +31,17 @@ function NavItem({ icon: Icon, label, isActive = false, badge }) {
           {badge}
         </span>
       ) : null}
-    </div>
+    </button>
   );
 }
 
-function DashboardHeader({ activeTransactionCount = 0 }) {
+function DashboardHeader({
+  activeTransactionCount = 0,
+  isTransactionPanelOpen = true,
+  onDashboardClick,
+  onActiveTransactionsClick,
+  onHistoryClick,
+}) {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const clearAuth = useAuthStore((state) => state.clearAuth);
@@ -55,6 +64,8 @@ function DashboardHeader({ activeTransactionCount = 0 }) {
         <div className="flex flex-wrap items-center gap-4">
           <button
             type="button"
+            onClick={() => toast.info("Menu belum tersedia")}
+            title="Menu belum tersedia"
             className="app-button app-button--ghost min-h-14 w-14 p-0"
             aria-label="Menu"
           >
@@ -80,13 +91,28 @@ function DashboardHeader({ activeTransactionCount = 0 }) {
           </div>
 
           <nav className="flex flex-wrap items-center gap-2">
-            <NavItem icon={LayoutGrid} label="Dashboard" isActive />
+            <NavItem
+              icon={LayoutGrid}
+              label="Dashboard"
+              isActive={!isTransactionPanelOpen}
+              onClick={onDashboardClick}
+              title="Dashboard (D)"
+            />
             <NavItem
               icon={ReceiptText}
               label="Transaksi Aktif"
               badge={activeTransactionCount}
+              isActive={isTransactionPanelOpen}
+              onClick={onActiveTransactionsClick}
+              title="Transaksi Aktif (T)"
             />
-            <NavItem icon={ReceiptText} label="Riwayat" />
+            <NavItem
+              icon={ReceiptText}
+              label="Riwayat"
+              isActive={false}
+              onClick={onHistoryClick}
+              title="Riwayat"
+            />
           </nav>
         </div>
 

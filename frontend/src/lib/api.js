@@ -65,6 +65,11 @@ export async function getActiveTransactions() {
   return response.data.data;
 }
 
+export async function getTodaySummary() {
+  const response = await api.get("/reports/today-summary");
+  return response.data.data;
+}
+
 export async function startOpenTransactionRequest(payload) {
   const response = await api.post("/transactions/open", payload);
   return response.data.data;

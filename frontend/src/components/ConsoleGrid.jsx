@@ -18,6 +18,7 @@ const CONSOLE_GROUP_LABEL = {
 function ConsoleGrid({
   consoles,
   activeTransactions,
+  isTransactionPanelOpen,
   isLoading,
   isError,
   onRetry,
@@ -97,7 +98,11 @@ function ConsoleGrid({
                   />
                 </div>
 
-                <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                <div
+                  className={`console-grid ${
+                    isTransactionPanelOpen ? "console-grid--compact" : ""
+                  }`}
+                >
                   {group.items.map((consoleUnit) => (
                     <ConsoleCard
                       key={consoleUnit.id}
