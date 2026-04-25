@@ -1,6 +1,6 @@
 const express = require("express");
 
-const { listProducts } = require("../controllers/product.controller");
+const { listProducts } = require("../controllers/product/product.controller");
 const { authenticate } = require("../middlewares/auth.middleware");
 const { authorizeRoles } = require("../middlewares/role.middleware");
 

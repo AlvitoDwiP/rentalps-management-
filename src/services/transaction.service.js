@@ -1,6 +1,7 @@
 const { Prisma } = require("@prisma/client");
 
 const prisma = require("../lib/prisma");
+const { normalizeDecimalFields } = require("../utils/normalizeDecimal");
 
 function generateInvoiceNumber() {
   const timestamp = new Date().toISOString().replace(/\D/g, "").slice(0, 14);
@@ -48,24 +49,6 @@ function calculateProductTotal(items = []) {
   return total.toNumber();
 }
 
-function convertDecimals(value) {
-  if (value instanceof Prisma.Decimal) {
-    return value.toNumber();
-  }
-
-  if (Array.isArray(value)) {
-    return value.map(convertDecimals);
-  }
-
-  if (value && typeof value === "object" && !(value instanceof Date)) {
-    return Object.fromEntries(
-      Object.entries(value).map(([key, itemValue]) => [key, convertDecimals(itemValue)]),
-    );
-  }
-
-  return value;
-}
-
 function enrichTransaction(transaction) {
   const expectedEndTime =
     transaction.pricingType === "PACKAGE" && transaction.packageDurationSnapshot
@@ -76,7 +59,7 @@ function enrichTransaction(transaction) {
       : null;
 
   return {
-    ...convertDecimals(transaction),
+    ...normalizeDecimalFields(transaction),
     expectedEndTime,
   };
 }

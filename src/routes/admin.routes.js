@@ -4,15 +4,15 @@ const {
   createProduct,
   updateProduct,
   deleteProduct,
-} = require("../controllers/admin/product.admin.controller");
+} = require("../controllers/product/product.controller");
 const {
   createPackage,
   updatePackage,
   deletePackage,
-} = require("../controllers/admin/package.admin.controller");
-const { updateRate } = require("../controllers/admin/rate.admin.controller");
-const { setConsoleMaintenance } = require("../controllers/admin/console.admin.controller");
-const { createUser } = require("../controllers/admin/user.admin.controller");
+} = require("../controllers/package/package.controller");
+const { updateRate } = require("../controllers/rate/rate.controller");
+const { setConsoleMaintenance } = require("../controllers/console/console.controller");
+const { createUser } = require("../controllers/user/user.controller");
 const { authenticate } = require("../middlewares/auth.middleware");
 const { authorizeRoles } = require("../middlewares/role.middleware");
 

@@ -1,6 +1,6 @@
 const express = require("express");
 
-const { listConsoles } = require("../controllers/console.controller");
+const { listConsoles } = require("../controllers/console/console.controller");
 const { authenticate } = require("../middlewares/auth.middleware");
 const { authorizeRoles } = require("../middlewares/role.middleware");
 
