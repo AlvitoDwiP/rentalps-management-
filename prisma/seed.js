@@ -1,7 +1,11 @@
-require("dotenv").config();
+const path = require("path");
+
+require("dotenv").config({
+  path: path.resolve(__dirname, "../backend/.env"),
+});
 
 const bcrypt = require("bcrypt");
-const prisma = require("../src/lib/prisma");
+const prisma = require("../backend/src/lib/prisma");
 
 const ADMIN_PASSWORD = "admin123";
 const ADMIN_EMAIL = "admin@rentalps.local";
