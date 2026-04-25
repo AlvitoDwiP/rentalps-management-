@@ -7,7 +7,7 @@ const {
   createTransactionItem,
   completeTransaction,
   changeTransactionConsole,
-} = require("../controllers/transaction.controller");
+} = require("../controllers/transaction/transaction.controller");
 const { authenticate } = require("../middlewares/auth.middleware");
 const { authorizeRoles } = require("../middlewares/role.middleware");
 

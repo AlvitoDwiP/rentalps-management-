@@ -2,12 +2,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
 const prisma = require("../../lib/prisma");
-
-function createError(message, status) {
-  const error = new Error(message);
-  error.status = status;
-  return error;
-}
+const createError = require("../../utils/createError");
 
 function sanitizeUser(user) {
   if (!user) {

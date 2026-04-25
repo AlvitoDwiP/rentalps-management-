@@ -6,7 +6,7 @@ const {
   addTransactionItem,
   moveTransactionConsole,
   getActiveTransactions,
-} = require("../services/transaction.service");
+} = require("../services/transaction/transaction.service");
 
 function formatDateTime(value) {
   if (!value) {

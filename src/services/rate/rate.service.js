@@ -1,11 +1,7 @@
 const prisma = require("../../lib/prisma");
 const { normalizeDecimalFields } = require("../../utils/normalizeDecimal");
-
-function createError(message, status = 400) {
-  const error = new Error(message);
-  error.status = status;
-  return error;
-}
+const createError = require("../../utils/createError");
+const parseNumber = require("../../utils/parseNumber");
 
 async function listRates() {
   const rates = await prisma.rentalRate.findMany({
@@ -18,11 +14,13 @@ async function listRates() {
 }
 
 async function updateRate(id, payload = {}) {
-  const { pricePerHour } = payload;
-
-  if (!Number.isInteger(pricePerHour) || pricePerHour < 0) {
-    throw createError("pricePerHour tidak boleh negatif dan harus berupa integer.", 400);
-  }
+  const pricePerHour = parseNumber(payload.pricePerHour, {
+    fieldName: "pricePerHour",
+    required: true,
+    integer: true,
+    min: 0,
+    invalidMessage: "pricePerHour tidak boleh negatif dan harus berupa integer.",
+  });
 
   const existingRate = await prisma.rentalRate.findUnique({
     where: { id },

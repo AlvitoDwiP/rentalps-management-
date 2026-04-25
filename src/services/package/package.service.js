@@ -1,11 +1,7 @@
 const prisma = require("../../lib/prisma");
 const { normalizeDecimalFields } = require("../../utils/normalizeDecimal");
-
-function createError(message, status = 400) {
-  const error = new Error(message);
-  error.status = status;
-  return error;
-}
+const createError = require("../../utils/createError");
+const parseNumber = require("../../utils/parseNumber");
 
 function validateConsoleType(consoleType) {
   if (consoleType === undefined) {
@@ -68,7 +64,19 @@ async function listPackages() {
 }
 
 async function createPackage(payload = {}) {
-  const { name, consoleType, durationMinutes, price } = payload;
+  const { name, consoleType } = payload;
+  const durationMinutes = parseNumber(payload.durationMinutes, {
+    fieldName: "durationMinutes",
+    integer: true,
+    min: 1,
+    invalidMessage: "durationMinutes harus lebih dari 0.",
+  });
+  const price = parseNumber(payload.price, {
+    fieldName: "price",
+    integer: true,
+    min: 0,
+    invalidMessage: "price tidak boleh negatif dan harus berupa integer.",
+  });
 
   if (!name || typeof name !== "string") {
     throw createError("name wajib diisi.", 400);
@@ -94,7 +102,19 @@ async function createPackage(payload = {}) {
 }
 
 async function updatePackage(id, payload = {}) {
-  const { name, consoleType, durationMinutes, price, isActive } = payload;
+  const { name, consoleType, isActive } = payload;
+  const durationMinutes = parseNumber(payload.durationMinutes, {
+    fieldName: "durationMinutes",
+    integer: true,
+    min: 1,
+    invalidMessage: "durationMinutes harus lebih dari 0.",
+  });
+  const price = parseNumber(payload.price, {
+    fieldName: "price",
+    integer: true,
+    min: 0,
+    invalidMessage: "price tidak boleh negatif dan harus berupa integer.",
+  });
 
   const existingPackage = await prisma.rentalPackage.findUnique({
     where: { id },

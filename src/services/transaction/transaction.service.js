@@ -1,7 +1,9 @@
 const { Prisma } = require("@prisma/client");
 
-const prisma = require("../lib/prisma");
-const { normalizeDecimalFields } = require("../utils/normalizeDecimal");
+const prisma = require("../../lib/prisma");
+const createError = require("../../utils/createError");
+const parseNumber = require("../../utils/parseNumber");
+const { normalizeDecimalFields } = require("../../utils/normalizeDecimal");
 
 function generateInvoiceNumber() {
   const timestamp = new Date().toISOString().replace(/\D/g, "").slice(0, 14);
@@ -11,8 +13,21 @@ function generateInvoiceNumber() {
 }
 
 function validateExtraMinutes(extraMinutes = 0) {
-  if (!Number.isInteger(extraMinutes) || extraMinutes < 0 || extraMinutes > 6) {
-    throw new Error("extraMinutes harus berupa bilangan bulat antara 0 sampai 6.");
+  if (extraMinutes === undefined || extraMinutes === null) {
+    return 0;
+  }
+
+  return parseNumber(extraMinutes, {
+    fieldName: "extraMinutes",
+    min: 0,
+    integer: true,
+    invalidMessage: "extraMinutes harus berupa bilangan bulat antara 0 sampai 6.",
+  });
+}
+
+function ensureExtraMinutesRange(extraMinutes) {
+  if (extraMinutes > 6) {
+    throw createError("extraMinutes harus berupa bilangan bulat antara 0 sampai 6.", 400);
   }
 
   return extraMinutes;
@@ -78,7 +93,7 @@ async function recalculateProductTotals(db, transactionId) {
 
 async function findConsoleByIdOrCode(db, { consoleId, consoleCode }) {
   if (!consoleId && !consoleCode) {
-    throw new Error("consoleId atau consoleCode wajib diisi.");
+    throw createError("consoleId atau consoleCode wajib diisi.", 400);
   }
 
   if (consoleId && consoleCode) {
@@ -107,7 +122,7 @@ async function resolveUserId(db, userId) {
     });
 
     if (!user || !user.isActive) {
-      throw new Error("User transaksi tidak ditemukan atau sedang tidak aktif.");
+      throw createError("User transaksi tidak ditemukan atau sedang tidak aktif.", 404);
     }
 
     return user.id;
@@ -133,7 +148,7 @@ async function resolveUserId(db, userId) {
     }));
 
   if (!activeAdmin) {
-    throw new Error("Tidak ada user aktif yang bisa dipakai untuk membuat transaksi.");
+    throw createError("Tidak ada user aktif yang bisa dipakai untuk membuat transaksi.", 500);
   }
 
   return activeAdmin.id;
@@ -148,10 +163,26 @@ async function findActiveRentalRateByConsoleType(db, consoleType) {
   });
 
   if (!rentalRate) {
-    throw new Error(`Rental rate aktif untuk ${consoleType} tidak ditemukan.`);
+    throw createError(`Rental rate aktif untuk ${consoleType} tidak ditemukan.`, 404);
   }
 
   return rentalRate;
+}
+
+async function findProductByIdOrName(db, { productId, productName }) {
+  if (productId) {
+    return db.product.findUnique({
+      where: { id: productId },
+    });
+  }
+
+  if (productName) {
+    return db.product.findFirst({
+      where: { name: productName },
+    });
+  }
+
+  return null;
 }
 
 async function getTransactionById(db, transactionId) {
@@ -214,26 +245,45 @@ async function getTransactionById(db, transactionId) {
 
 function ensureConsoleAvailable(consoleUnit) {
   if (!consoleUnit) {
-    throw new Error("Console tidak ditemukan.");
+    throw createError("Console tidak ditemukan.", 404);
   }
 
   if (consoleUnit.status !== "AVAILABLE") {
-    throw new Error(`Console ${consoleUnit.code} sedang tidak tersedia.`);
+    throw createError(`Console ${consoleUnit.code} sedang tidak tersedia.`, 409);
   }
 }
 
 function ensureTransactionIsActive(transaction) {
   if (!transaction) {
-    throw new Error("Transaksi tidak ditemukan.");
+    throw createError("Transaksi tidak ditemukan.", 404);
   }
 
   if (transaction.status !== "ACTIVE") {
-    throw new Error("Transaksi ini tidak aktif atau sudah selesai.");
+    throw createError("Transaksi ini tidak aktif atau sudah selesai.", 409);
   }
 }
 
+function sanitizeTransactionResponse(transaction) {
+  if (!transaction) {
+    return transaction;
+  }
+
+  if (!transaction.user) {
+    return transaction;
+  }
+
+  const { password, ...safeUser } = transaction.user;
+
+  return {
+    ...transaction,
+    user: safeUser,
+  };
+}
+
 async function startOpenTransaction(payload = {}) {
-  const extraMinutes = validateExtraMinutes(payload.extraMinutes ?? 0);
+  const extraMinutes = ensureExtraMinutesRange(
+    validateExtraMinutes(payload.extraMinutes ?? 0),
+  );
 
   return prisma.$transaction(async (tx) => {
     const consoleUnit = await findConsoleByIdOrCode(tx, {
@@ -278,15 +328,19 @@ async function startOpenTransaction(payload = {}) {
       },
     });
 
-    return enrichTransaction(await getTransactionById(tx, transaction.id));
+    return sanitizeTransactionResponse(
+      enrichTransaction(await getTransactionById(tx, transaction.id)),
+    );
   });
 }
 
 async function startPackageTransaction(payload = {}) {
-  const extraMinutes = validateExtraMinutes(payload.extraMinutes ?? 0);
+  const extraMinutes = ensureExtraMinutesRange(
+    validateExtraMinutes(payload.extraMinutes ?? 0),
+  );
 
   if (!payload.packageId) {
-    throw new Error("packageId wajib diisi untuk transaksi package.");
+    throw createError("packageId wajib diisi untuk transaksi package.");
   }
 
   return prisma.$transaction(async (tx) => {
@@ -307,15 +361,15 @@ async function startPackageTransaction(payload = {}) {
     });
 
     if (!rentalPackage) {
-      throw new Error("Rental package tidak ditemukan.");
+      throw createError("Rental package tidak ditemukan.", 404);
     }
 
     if (!rentalPackage.isActive) {
-      throw new Error("Rental package sedang tidak aktif.");
+      throw createError("Rental package sedang tidak aktif.", 409);
     }
 
     if (rentalPackage.consoleType !== consoleUnit.consoleType) {
-      throw new Error("Rental package tidak cocok dengan tipe console yang dipilih.");
+      throw createError("Rental package tidak cocok dengan tipe console yang dipilih.", 409);
     }
 
     const startTime = new Date(Date.now() + extraMinutes * 60000);
@@ -348,7 +402,9 @@ async function startPackageTransaction(payload = {}) {
       },
     });
 
-    return enrichTransaction(await getTransactionById(tx, transaction.id));
+    return sanitizeTransactionResponse(
+      enrichTransaction(await getTransactionById(tx, transaction.id)),
+    );
   });
 }
 
@@ -384,62 +440,83 @@ async function finishTransaction(transactionId) {
       },
     });
 
-    return enrichTransaction(await getTransactionById(tx, transaction.id));
+    return sanitizeTransactionResponse(
+      enrichTransaction(await getTransactionById(tx, transaction.id)),
+    );
   });
 }
 
 async function addTransactionItem(payload = {}) {
   if (!payload.transactionId) {
-    throw new Error("transactionId wajib diisi.");
+    throw createError("transactionId wajib diisi.");
   }
 
-  if (!payload.productId) {
-    throw new Error("productId wajib diisi.");
+  const quantity = parseNumber(payload.quantity, {
+    fieldName: "quantity",
+    required: true,
+    integer: true,
+    min: 1,
+    invalidMessage: "quantity harus berupa bilangan bulat minimal 1.",
+  });
+
+  const product = await findProductByIdOrName(prisma, {
+    productId: payload.productId,
+    productName: payload.productName,
+  });
+
+  if (payload.productName && !product) {
+    throw createError(`Produk dengan nama "${payload.productName}" tidak ditemukan.`, 404);
   }
 
-  if (!Number.isInteger(payload.quantity) || payload.quantity < 1) {
-    throw new Error("quantity harus berupa bilangan bulat minimal 1.");
+  if (!payload.productId && !payload.productName) {
+    throw createError("productId atau productName wajib diisi.", 400);
+  }
+
+  const resolvedProductId = payload.productId || product?.id;
+
+  if (!resolvedProductId) {
+    throw createError("productId atau productName wajib diisi.", 400);
   }
 
   return prisma.$transaction(async (tx) => {
     const transaction = await getTransactionById(tx, payload.transactionId);
-    const product = await tx.product.findUnique({
-      where: { id: payload.productId },
+    const resolvedProduct = await tx.product.findUnique({
+      where: { id: resolvedProductId },
     });
 
     ensureTransactionIsActive(transaction);
 
-    if (!product) {
-      throw new Error("Produk tidak ditemukan.");
+    if (!resolvedProduct) {
+      throw createError("Produk tidak ditemukan.", 404);
     }
 
-    if (!product.isActive) {
-      throw new Error("Produk sedang tidak aktif.");
+    if (!resolvedProduct.isActive) {
+      throw createError("Produk sedang tidak aktif.", 409);
     }
 
-    if (product.stock < payload.quantity) {
-      throw new Error(`Stok produk ${product.name} tidak cukup.`);
+    if (resolvedProduct.stock < quantity) {
+      throw createError(`Stok produk ${resolvedProduct.name} tidak cukup.`, 409);
     }
 
-    const subtotalSnapshot = new Prisma.Decimal(product.price).mul(payload.quantity);
+    const subtotalSnapshot = new Prisma.Decimal(resolvedProduct.price).mul(quantity);
 
     await tx.transactionItem.create({
       data: {
         transactionId: transaction.id,
-        productId: product.id,
-        quantity: payload.quantity,
-        unitPriceSnapshot: product.price,
+        productId: resolvedProduct.id,
+        quantity,
+        unitPriceSnapshot: resolvedProduct.price,
         subtotalSnapshot,
-        productNameSnapshot: product.name,
-        productCategorySnapshot: product.category,
+        productNameSnapshot: resolvedProduct.name,
+        productCategorySnapshot: resolvedProduct.category,
       },
     });
 
     await tx.product.update({
-      where: { id: product.id },
+      where: { id: resolvedProduct.id },
       data: {
         stock: {
-          decrement: payload.quantity,
+          decrement: quantity,
         },
       },
     });
@@ -457,13 +534,15 @@ async function addTransactionItem(payload = {}) {
       },
     });
 
-    return enrichTransaction(await getTransactionById(tx, transaction.id));
+    return sanitizeTransactionResponse(
+      enrichTransaction(await getTransactionById(tx, transaction.id)),
+    );
   });
 }
 
 async function moveTransactionConsole(payload = {}) {
   if (!payload.transactionId) {
-    throw new Error("transactionId wajib diisi.");
+    throw createError("transactionId wajib diisi.");
   }
 
   return prisma.$transaction(async (tx) => {
@@ -477,19 +556,22 @@ async function moveTransactionConsole(payload = {}) {
     });
 
     if (!targetConsole) {
-      throw new Error("Console tujuan tidak ditemukan.");
+      throw createError("Console tujuan tidak ditemukan.", 404);
     }
 
     if (targetConsole.id === transaction.playStationUnitId) {
-      throw new Error("Console tujuan sama dengan console yang sedang dipakai.");
+      throw createError("Console tujuan sama dengan console yang sedang dipakai.");
     }
 
     if (targetConsole.status !== "AVAILABLE") {
-      throw new Error(`Console tujuan ${targetConsole.code} sedang tidak tersedia.`);
+      throw createError(`Console tujuan ${targetConsole.code} sedang tidak tersedia.`, 409);
     }
 
     if (targetConsole.consoleType !== transaction.playStationUnit.consoleType) {
-      throw new Error("Pindah console beda tipe belum diizinkan agar snapshot harga tetap adil.");
+      throw createError(
+        "Pindah console beda tipe belum diizinkan agar snapshot harga tetap adil.",
+        409,
+      );
     }
 
     await tx.playStationUnit.update({
@@ -509,7 +591,9 @@ async function moveTransactionConsole(payload = {}) {
       },
     });
 
-    return enrichTransaction(await getTransactionById(tx, transaction.id));
+    return sanitizeTransactionResponse(
+      enrichTransaction(await getTransactionById(tx, transaction.id)),
+    );
   });
 }
 
@@ -529,7 +613,9 @@ async function getActiveTransactions() {
     hydratedTransactions.push(await getTransactionById(prisma, transaction.id));
   }
 
-  return hydratedTransactions.map((transaction) => enrichTransaction(transaction));
+  return hydratedTransactions.map((transaction) =>
+    sanitizeTransactionResponse(enrichTransaction(transaction)),
+  );
 }
 
 module.exports = {

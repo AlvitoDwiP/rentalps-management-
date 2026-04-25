@@ -3,7 +3,7 @@ const {
   startOpenTransaction,
   addTransactionItem,
   finishTransaction,
-} = require("../src/services/transaction.service");
+} = require("../src/services/transaction/transaction.service");
 
 function serialize(value) {
   return JSON.stringify(

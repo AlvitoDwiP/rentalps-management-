@@ -1,10 +1,5 @@
 const prisma = require("../../lib/prisma");
-
-function createError(message, status = 400) {
-  const error = new Error(message);
-  error.status = status;
-  return error;
-}
+const createError = require("../../utils/createError");
 
 async function listConsoles() {
   return prisma.playStationUnit.findMany({

@@ -1,11 +1,7 @@
 const prisma = require("../../lib/prisma");
 const { normalizeDecimalFields } = require("../../utils/normalizeDecimal");
-
-function createError(message, status = 400) {
-  const error = new Error(message);
-  error.status = status;
-  return error;
-}
+const createError = require("../../utils/createError");
+const parseNumber = require("../../utils/parseNumber");
 
 function validatePrice(price) {
   if (price === undefined) {
@@ -76,7 +72,19 @@ async function listProducts() {
 }
 
 async function createProduct(payload = {}) {
-  const { name, price, stock, category } = payload;
+  const { name, category } = payload;
+  const price = parseNumber(payload.price, {
+    fieldName: "price",
+    min: 0,
+    integer: true,
+    invalidMessage: "price tidak boleh negatif dan harus berupa integer.",
+  });
+  const stock = parseNumber(payload.stock, {
+    fieldName: "stock",
+    min: 0,
+    integer: true,
+    invalidMessage: "stock tidak boleh negatif dan harus berupa integer.",
+  });
 
   if (!name || typeof name !== "string") {
     throw createError("name wajib diisi.", 400);
@@ -101,7 +109,19 @@ async function createProduct(payload = {}) {
 }
 
 async function updateProduct(id, payload = {}) {
-  const { name, price, stock, isActive, category } = payload;
+  const { name, isActive, category } = payload;
+  const price = parseNumber(payload.price, {
+    fieldName: "price",
+    min: 0,
+    integer: true,
+    invalidMessage: "price tidak boleh negatif dan harus berupa integer.",
+  });
+  const stock = parseNumber(payload.stock, {
+    fieldName: "stock",
+    min: 0,
+    integer: true,
+    invalidMessage: "stock tidak boleh negatif dan harus berupa integer.",
+  });
 
   const existingProduct = await prisma.product.findUnique({
     where: { id },
