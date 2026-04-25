@@ -20,9 +20,12 @@ function LoginPage() {
   const loginMutation = useMutation({
     mutationFn: loginRequest,
     onSuccess: (data) => {
+      const userName = data.user?.name || data.user?.username || "User";
+      const redirectPath = data.user?.role === "ADMIN" ? "/admin" : "/dashboard";
+
       setAuth(data);
-      toast.success(`Selamat datang, ${data.user.name}`);
-      navigate("/dashboard", { replace: true });
+      toast.success(`Selamat datang, ${userName}`);
+      navigate(redirectPath, { replace: true });
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error));

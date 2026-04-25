@@ -1,15 +1,21 @@
 const path = require("path");
+const { createRequire } = require("module");
 
-require("dotenv").config({
+const backendRequire = createRequire(path.resolve(__dirname, "../backend/package.json"));
+
+backendRequire("dotenv").config({
   path: path.resolve(__dirname, "../backend/.env"),
 });
 
-const bcrypt = require("bcrypt");
+const bcrypt = backendRequire("bcrypt");
 const prisma = require("../backend/src/lib/prisma");
 
 const ADMIN_PASSWORD = "admin123";
 const ADMIN_EMAIL = "admin@rentalps.local";
 const ADMIN_USERNAME = "admin";
+const CASHIER_PASSWORD = "cashier123";
+const CASHIER_EMAIL = "cashier@rentalps.local";
+const CASHIER_USERNAME = "cashier";
 
 const consoleUnits = [
   ...Array.from({ length: 5 }, (_, index) => ({
@@ -108,6 +114,29 @@ async function seedAdminUser() {
   });
 }
 
+async function seedCashierUser() {
+  const passwordHash = await bcrypt.hash(CASHIER_PASSWORD, 10);
+
+  return prisma.user.upsert({
+    where: { email: CASHIER_EMAIL },
+    update: {
+      name: "Cashier Default",
+      username: CASHIER_USERNAME,
+      password: passwordHash,
+      role: "CASHIER",
+      isActive: true,
+    },
+    create: {
+      name: "Cashier Default",
+      username: CASHIER_USERNAME,
+      email: CASHIER_EMAIL,
+      password: passwordHash,
+      role: "CASHIER",
+      isActive: true,
+    },
+  });
+}
+
 async function seedConsoleUnits() {
   await Promise.all(
     consoleUnits.map((unit) =>
@@ -192,10 +221,13 @@ async function seedProducts() {
 }
 
 async function printSummary() {
-  const [userCount, consoleCount, rentalRateCount, rentalPackageCount, productCount] =
+  const [adminUserCount, cashierUserCount, consoleCount, rentalRateCount, rentalPackageCount, productCount] =
     await Promise.all([
       prisma.user.count({
         where: { email: ADMIN_EMAIL },
+      }),
+      prisma.user.count({
+        where: { email: CASHIER_EMAIL },
       }),
       prisma.playStationUnit.count(),
       prisma.rentalRate.count(),
@@ -205,17 +237,20 @@ async function printSummary() {
 
   console.log("Seed selesai.");
   console.table([
-    { entity: "Admin User", count: userCount },
+    { entity: "Admin User", count: adminUserCount },
+    { entity: "Cashier User", count: cashierUserCount },
     { entity: "PlayStationUnit", count: consoleCount },
     { entity: "RentalRate", count: rentalRateCount },
     { entity: "RentalPackage", count: rentalPackageCount },
     { entity: "Product", count: productCount },
   ]);
   console.log(`Default admin login: ${ADMIN_EMAIL} / ${ADMIN_PASSWORD}`);
+  console.log(`Default cashier login: ${CASHIER_EMAIL} / ${CASHIER_PASSWORD}`);
 }
 
 async function main() {
   await seedAdminUser();
+  await seedCashierUser();
   await seedConsoleUnits();
   await seedRentalRates();
   await seedRentalPackages();

@@ -1,6 +1,7 @@
 const cors = require("cors");
 const express = require("express");
 
+const adminDashboardRoutes = require("./routes/adminDashboard.routes");
 const adminRoutes = require("./routes/admin.routes");
 const authRoutes = require("./routes/auth.routes");
 const consoleRoutes = require("./routes/console.routes");
@@ -56,6 +57,7 @@ app.get("/health", (req, res) => {
 });
 
 app.use("/api/auth", authRoutes);
+app.use("/api/admin/dashboard", adminDashboardRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/consoles", consoleRoutes);
 app.use("/api/products", productRoutes);

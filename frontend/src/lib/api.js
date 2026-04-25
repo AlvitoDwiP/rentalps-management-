@@ -74,6 +74,11 @@ export async function getTodaySummary() {
   return response.data.data;
 }
 
+export async function getAdminDashboard() {
+  const response = await api.get("/admin/dashboard");
+  return response.data.data;
+}
+
 export async function getTransactionHistory(params = {}) {
   const response = await api.get("/transactions/history", {
     params,
@@ -158,6 +163,18 @@ export async function deleteAdminPackageRequest(id) {
 
 export async function updateAdminRateRequest({ id, payload }) {
   const response = await api.patch(`/admin/rates/${id}`, payload);
+  return response.data.data;
+}
+
+export async function updateAdminConsoleMaintenanceRequest({ id, status }) {
+  const response = await api.patch(`/admin/consoles/${id}/maintenance`, {
+    status,
+  });
+  return response.data.data;
+}
+
+export async function createAdminUserRequest(payload) {
+  const response = await api.post("/admin/users", payload);
   return response.data.data;
 }
 
