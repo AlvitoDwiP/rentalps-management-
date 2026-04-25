@@ -4,6 +4,7 @@ import AdminLayout from "./layouts/AdminLayout.jsx";
 import LoginPage from "./pages/LoginPage.jsx";
 import AdminPackagesPage from "./pages/admin/AdminPackagesPage.jsx";
 import AdminProductsPage from "./pages/admin/AdminProductsPage.jsx";
+import AdminRatesPage from "./pages/admin/AdminRatesPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
 import AdminRoute from "./routes/AdminRoute.jsx";
 import ProtectedRoute from "./routes/ProtectedRoute.jsx";
@@ -46,6 +47,7 @@ function App() {
         <Route index element={<Navigate to="products" replace />} />
         <Route path="products" element={<AdminProductsPage />} />
         <Route path="packages" element={<AdminPackagesPage />} />
+        <Route path="rates" element={<AdminRatesPage />} />
         <Route path="*" element={<Navigate to="/admin/products" replace />} />
       </Route>
       <Route path="*" element={<Navigate to="/" replace />} />

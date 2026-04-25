@@ -50,6 +50,11 @@ export async function getPackages() {
   return response.data.data;
 }
 
+export async function getRentalRates() {
+  const response = await api.get("/rates");
+  return response.data.data;
+}
+
 export async function getProducts() {
   const response = await api.get("/products");
   return response.data.data;
@@ -124,6 +129,11 @@ export async function updateAdminPackageRequest({ id, payload }) {
 
 export async function deleteAdminPackageRequest(id) {
   const response = await api.delete(`/admin/packages/${id}`);
+  return response.data.data;
+}
+
+export async function updateAdminRateRequest({ id, payload }) {
+  const response = await api.patch(`/admin/rates/${id}`, payload);
   return response.data.data;
 }
 

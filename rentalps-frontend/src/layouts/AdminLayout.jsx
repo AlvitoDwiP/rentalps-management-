@@ -7,7 +7,7 @@ const menuItems = [
   { label: "Dashboard", to: "/admin", icon: LayoutGrid },
   { label: "Products", to: "/admin/products", icon: Package2 },
   { label: "Packages", to: "/admin/packages", icon: ReceiptText },
-  { label: "Rates", icon: ReceiptText, disabled: true },
+  { label: "Rates", to: "/admin/rates", icon: ReceiptText },
   { label: "Consoles", icon: Tv, disabled: true },
   { label: "Users", icon: Users, disabled: true },
 ];
