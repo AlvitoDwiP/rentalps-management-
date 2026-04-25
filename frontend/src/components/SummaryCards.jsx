@@ -1,51 +1,93 @@
-import { Gamepad2, ShieldAlert, TimerReset, Tv2 } from "lucide-react";
+import { Activity, Gamepad2, ShieldAlert, TimerReset, Wallet } from "lucide-react";
+
+import { formatRupiah } from "../lib/format.js";
+import { theme } from "../lib/theme.js";
 
 const cards = [
   {
     key: "available",
     label: "Available",
     icon: Gamepad2,
-    accent: "from-emerald-500/20 to-emerald-500/5 text-emerald-700",
+    color: theme.colors.available,
+    soft: theme.colors.availableSoft,
+    formatter: (value) => value,
   },
   {
     key: "inUse",
     label: "In Use",
     icon: TimerReset,
-    accent: "from-amber-500/20 to-amber-500/5 text-amber-700",
+    color: theme.colors.inUse,
+    soft: theme.colors.inUseSoft,
+    formatter: (value) => value,
   },
   {
     key: "maintenance",
     label: "Maintenance",
     icon: ShieldAlert,
-    accent: "from-rose-500/20 to-rose-500/5 text-rose-700",
+    color: theme.colors.maintenance,
+    soft: theme.colors.maintenanceSoft,
+    formatter: (value) => value,
   },
   {
-    key: "total",
-    label: "Total Console",
-    icon: Tv2,
-    accent: "from-sky-500/20 to-sky-500/5 text-sky-700",
+    key: "revenueToday",
+    label: "Pendapatan Hari Ini",
+    icon: Wallet,
+    color: theme.colors.text,
+    soft: "rgba(255,255,255,0.04)",
+    formatter: (value) => formatRupiah(value),
+  },
+  {
+    key: "transactions",
+    label: "Transaksi",
+    icon: Activity,
+    color: theme.colors.text,
+    soft: "rgba(255,255,255,0.04)",
+    formatter: (value) => value,
   },
 ];
 
 function SummaryCards({ summary, isLoading }) {
   return (
-    <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <section className="grid gap-4 lg:grid-cols-5">
       {cards.map((card) => {
         const Icon = card.icon;
 
         return (
           <article
             key={card.key}
-            className={`rounded-[1.75rem] border border-white/70 bg-gradient-to-br ${card.accent} p-5 shadow-[0_18px_50px_-30px_rgba(15,23,42,0.4)]`}
+            className="dashboard-panel min-h-[112px] px-4 py-4 sm:px-5"
+            style={{
+              background:
+                card.key === "revenueToday" || card.key === "transactions"
+                  ? "var(--color-surface)"
+                  : `linear-gradient(180deg, ${card.soft} 0%, var(--color-surface) 88%)`,
+            }}
           >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-sm font-medium text-slate-500">{card.label}</p>
-                <p className="mt-3 text-4xl font-semibold text-slate-950">
-                  {isLoading ? "..." : summary[card.key]}
+            <div className="flex h-full items-center justify-between gap-4">
+              <div className="min-w-0">
+                <div className="flex items-center gap-3">
+                  <span
+                    className="inline-flex h-3 w-3 rounded-full"
+                    style={{ backgroundColor: card.color }}
+                  />
+                  <p className="text-sm text-[var(--color-muted)]">{card.label}</p>
+                </div>
+                <p
+                  className="font-display-number mt-3 text-[2rem] font-semibold leading-none"
+                  style={{ color: card.color }}
+                >
+                  {isLoading ? "..." : card.formatter(summary[card.key])}
                 </p>
               </div>
-              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-white/75">
+
+              <div
+                className="inline-flex h-12 w-12 items-center justify-center rounded-[10px] border"
+                style={{
+                  borderColor: theme.colors.border,
+                  backgroundColor: card.soft,
+                  color: card.color,
+                }}
+              >
                 <Icon className="h-5 w-5" />
               </div>
             </div>

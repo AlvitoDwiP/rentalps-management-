@@ -7,6 +7,7 @@ import {
   getApiErrorMessage,
   moveTransactionConsoleRequest,
 } from "../lib/api.js";
+import { theme } from "../lib/theme.js";
 
 function MoveConsoleModal({ transaction, consoles, onClose }) {
   const queryClient = useQueryClient();
@@ -62,17 +63,20 @@ function MoveConsoleModal({ transaction, consoles, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/55 p-4 backdrop-blur-sm sm:items-center">
-      <div className="w-full max-w-3xl overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 text-white shadow-[0_35px_120px_-45px_rgba(15,23,42,0.8)]">
-        <div className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-5 sm:px-6">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-4 backdrop-blur-sm sm:items-center">
+      <div className="dashboard-panel w-full max-w-3xl overflow-hidden">
+        <div
+          className="flex items-start justify-between gap-4 border-b px-5 py-5 sm:px-6"
+          style={{ borderColor: theme.colors.border }}
+        >
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-orange-400">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-muted)]">
               Move Console
             </p>
-            <h3 className="mt-2 text-3xl font-semibold text-white">
+            <h3 className="mt-2 text-3xl font-semibold text-[var(--color-text)]">
               {currentConsoleCode}
             </h3>
-            <p className="mt-1 text-sm text-slate-300">
+            <p className="mt-1 text-sm text-[var(--color-muted)]">
               Pilih console tujuan dengan tipe yang sama dan status AVAILABLE.
             </p>
           </div>
@@ -81,53 +85,86 @@ function MoveConsoleModal({ transaction, consoles, onClose }) {
             type="button"
             onClick={onClose}
             disabled={moveMutation.isPending}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 text-slate-300 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
+            className="app-button app-button--ghost min-h-11 w-11 p-0"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="grid gap-5 px-5 py-5 sm:px-6 lg:grid-cols-[0.9fr_1.1fr]">
+        <form
+          onSubmit={handleSubmit}
+          className="grid gap-5 px-5 py-5 sm:px-6 lg:grid-cols-[0.9fr_1.1fr]"
+        >
           <div className="space-y-4">
-            <div className="rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-5">
+            <div
+              className="rounded-[16px] border p-5"
+              style={{
+                borderColor: theme.colors.border,
+                backgroundColor: theme.colors.surfaceSoft,
+              }}
+            >
               <div className="flex items-center gap-3">
-                <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-500/15 text-orange-300">
+                <div
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-[12px] border"
+                  style={{
+                    borderColor: theme.colors.border,
+                    backgroundColor: theme.colors.surface,
+                    color: theme.colors.text,
+                  }}
+                >
                   <UserRound className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-400">Customer</p>
-                  <p className="text-lg font-semibold text-white">
+                  <p className="text-sm text-[var(--color-muted)]">Customer</p>
+                  <p className="text-lg font-semibold text-[var(--color-text)]">
                     {transaction.customerName || "Walk-in Customer"}
                   </p>
                 </div>
               </div>
 
-              <div className="mt-4 space-y-3 text-sm text-slate-300">
+              <div className="mt-4 space-y-3 text-sm text-[var(--color-muted)]">
                 <div className="flex items-center justify-between gap-3">
                   <span>Console sekarang</span>
-                  <span className="font-semibold text-white">{currentConsoleCode}</span>
+                  <span className="font-semibold text-[var(--color-text)]">
+                    {currentConsoleCode}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span>Tipe console</span>
-                  <span className="font-semibold text-white">{currentConsoleType}</span>
+                  <span className="font-semibold text-[var(--color-text)]">
+                    {currentConsoleType}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span>Mode transaksi</span>
-                  <span className="font-semibold text-white">
+                  <span className="font-semibold text-[var(--color-text)]">
                     {transaction.pricingType}
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-5">
+            <div
+              className="rounded-[16px] border p-5"
+              style={{
+                borderColor: theme.colors.border,
+                backgroundColor: theme.colors.surfaceSoft,
+              }}
+            >
               <div className="flex items-center gap-3">
-                <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/15 text-emerald-300">
+                <div
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-[12px] border"
+                  style={{
+                    borderColor: theme.colors.border,
+                    backgroundColor: theme.colors.surface,
+                    color: theme.colors.available,
+                  }}
+                >
                   <ArrowRightLeft className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-400">Target terpilih</p>
-                  <p className="text-xl font-semibold text-white">
+                  <p className="text-sm text-[var(--color-muted)]">Target terpilih</p>
+                  <p className="text-xl font-semibold text-[var(--color-text)]">
                     {selectedConsoleCode || "Belum dipilih"}
                   </p>
                 </div>
@@ -138,22 +175,26 @@ function MoveConsoleModal({ transaction, consoles, onClose }) {
           <div className="space-y-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-medium text-slate-100">Console tujuan</p>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm font-medium text-[var(--color-text)]">Console tujuan</p>
+                <p className="text-sm text-[var(--color-muted)]">
                   Hanya console AVAILABLE dengan tipe {currentConsoleType} yang ditampilkan.
                 </p>
               </div>
-              <span className="rounded-full bg-white/10 px-3 py-1 text-xs font-semibold text-slate-200">
-                {availableTargets.length} tersedia
-              </span>
+              <span className="mode-badge mode-badge--open">{availableTargets.length} tersedia</span>
             </div>
 
             {availableTargets.length === 0 ? (
-              <div className="rounded-[1.75rem] border border-dashed border-white/15 bg-white/[0.03] px-5 py-10 text-center">
-                <p className="text-lg font-semibold text-white">
+              <div
+                className="rounded-[16px] border px-5 py-10 text-center"
+                style={{
+                  borderColor: theme.colors.border,
+                  backgroundColor: theme.colors.surfaceSoft,
+                }}
+              >
+                <p className="text-lg font-semibold text-[var(--color-text)]">
                   Belum ada console tujuan yang tersedia
                 </p>
-                <p className="mt-2 text-sm leading-6 text-slate-400">
+                <p className="mt-2 text-sm leading-6 text-[var(--color-muted)]">
                   Tunggu sampai ada console {currentConsoleType} yang kembali AVAILABLE,
                   lalu coba pindahkan lagi.
                 </p>
@@ -169,32 +210,39 @@ function MoveConsoleModal({ transaction, consoles, onClose }) {
                       type="button"
                       disabled={moveMutation.isPending}
                       onClick={() => setSelectedConsoleCode(consoleUnit.code)}
-                      className={`rounded-[1.5rem] border p-4 text-left transition ${
-                        isSelected
-                          ? "border-orange-400/80 bg-orange-500/10"
-                          : "border-white/10 bg-white/[0.04] hover:border-white/20 hover:bg-white/[0.06]"
-                      } disabled:cursor-not-allowed disabled:opacity-60`}
+                      className="rounded-[14px] border p-4 text-left transition disabled:cursor-not-allowed disabled:opacity-60"
+                      style={{
+                        borderColor:
+                          isSelected ? theme.colors.inUse : theme.colors.border,
+                        backgroundColor:
+                          isSelected ? theme.colors.inUseSoft : theme.colors.surfaceSoft,
+                      }}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-lg font-semibold text-white">
+                          <p className="text-lg font-semibold text-[var(--color-text)]">
                             {consoleUnit.code}
                           </p>
-                          <p className="mt-1 text-sm text-slate-400">
+                          <p className="mt-1 text-sm text-[var(--color-muted)]">
                             {consoleUnit.consoleType}
                           </p>
                         </div>
 
-                        <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10 text-slate-100">
+                        <div
+                          className="inline-flex h-11 w-11 items-center justify-center rounded-[12px] border"
+                          style={{
+                            borderColor: theme.colors.border,
+                            backgroundColor: theme.colors.surface,
+                            color: theme.colors.text,
+                          }}
+                        >
                           <Gamepad2 className="h-5 w-5" />
                         </div>
                       </div>
 
                       <div className="mt-5 flex items-center justify-between gap-3">
-                        <span className="rounded-full bg-emerald-500/15 px-3 py-1 text-xs font-semibold text-emerald-200">
-                          AVAILABLE
-                        </span>
-                        <span className="text-sm text-slate-300">
+                        <span className="status-badge status-badge--available">AVAILABLE</span>
+                        <span className="text-sm text-[var(--color-muted)]">
                           {isSelected ? "Dipilih" : "Klik untuk pilih"}
                         </span>
                       </div>
@@ -204,19 +252,26 @@ function MoveConsoleModal({ transaction, consoles, onClose }) {
               </div>
             )}
 
-            <div className="flex flex-col-reverse gap-3 border-t border-white/10 pt-4 sm:flex-row sm:justify-end">
+            <div
+              className="flex flex-col-reverse gap-3 border-t pt-4 sm:flex-row sm:justify-end"
+              style={{ borderColor: theme.colors.border }}
+            >
               <button
                 type="button"
                 onClick={onClose}
                 disabled={moveMutation.isPending}
-                className="rounded-2xl border border-white/10 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
+                className="app-button app-button--ghost"
               >
                 Batal
               </button>
               <button
                 type="submit"
                 disabled={moveMutation.isPending || !selectedConsoleCode}
-                className="rounded-2xl bg-orange-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-60"
+                className={`app-button ${
+                  moveMutation.isPending || !selectedConsoleCode
+                    ? "app-button--disabled"
+                    : "app-button--primary"
+                }`}
               >
                 {moveMutation.isPending ? "Memindahkan..." : "Pindahkan Console"}
               </button>

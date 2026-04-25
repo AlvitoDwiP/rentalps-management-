@@ -9,6 +9,7 @@ import {
   getProducts,
 } from "../lib/api.js";
 import { formatRupiah } from "../lib/format.js";
+import { theme } from "../lib/theme.js";
 import EmptyState from "./EmptyState.jsx";
 import ErrorState from "./ErrorState.jsx";
 
@@ -134,17 +135,20 @@ function AddItemModal({ transaction, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/55 p-4 backdrop-blur-sm sm:items-center">
-      <div className="w-full max-w-4xl overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 text-white shadow-[0_35px_120px_-45px_rgba(15,23,42,0.8)]">
-        <div className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-5 sm:px-6">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-4 backdrop-blur-sm sm:items-center">
+      <div className="dashboard-panel w-full max-w-4xl overflow-hidden">
+        <div
+          className="flex items-start justify-between gap-4 border-b px-5 py-5 sm:px-6"
+          style={{ borderColor: theme.colors.border }}
+        >
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-orange-400">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-muted)]">
               Add Item
             </p>
-            <h3 className="mt-2 text-3xl font-semibold text-white">
+            <h3 className="mt-2 text-3xl font-semibold text-[var(--color-text)]">
               {transaction.playStationUnit?.code}
             </h3>
-            <p className="mt-1 text-sm text-slate-300">
+            <p className="mt-1 text-sm text-[var(--color-muted)]">
               {transaction.customerName || "Walk-in Customer"}
             </p>
           </div>
@@ -153,23 +157,26 @@ function AddItemModal({ transaction, onClose }) {
             type="button"
             onClick={onClose}
             disabled={addItemsMutation.isPending}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 text-slate-300 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
+            className="app-button app-button--ghost min-h-11 w-11 p-0"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="grid gap-5 px-5 py-5 sm:px-6 lg:grid-cols-[1.45fr_0.75fr]">
+        <form
+          onSubmit={handleSubmit}
+          className="grid gap-5 px-5 py-5 sm:px-6 lg:grid-cols-[1.45fr_0.75fr]"
+        >
           <div className="space-y-4">
             <div className="flex items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-medium text-slate-100">Pilih produk</p>
-                <p className="text-sm text-slate-400">
+                <p className="text-sm font-medium text-[var(--color-text)]">Pilih produk</p>
+                <p className="text-sm text-[var(--color-muted)]">
                   Klik kartu untuk tambah cepat. Tombol minus untuk koreksi quantity.
                 </p>
               </div>
               {productsQuery.isLoading ? (
-                <span className="text-xs text-slate-400">Memuat produk...</span>
+                <span className="text-xs text-[var(--color-muted)]">Memuat produk...</span>
               ) : null}
             </div>
 
@@ -178,7 +185,11 @@ function AddItemModal({ transaction, onClose }) {
                 {Array.from({ length: 6 }).map((_, index) => (
                   <div
                     key={index}
-                    className="h-36 animate-pulse rounded-[1.5rem] border border-white/10 bg-white/5"
+                    className="h-36 animate-pulse rounded-[14px] border"
+                    style={{
+                      borderColor: theme.colors.border,
+                      backgroundColor: theme.colors.surfaceSoft,
+                    }}
                   />
                 ))}
               </div>
@@ -188,15 +199,15 @@ function AddItemModal({ transaction, onClose }) {
                 description="Daftar produk belum bisa diambil saat ini. Coba muat ulang lagi."
                 retryLabel="Retry Produk"
                 onRetry={() => productsQuery.refetch()}
-                className="border-white/10 bg-rose-500/10"
+                className="border-[var(--color-maintenance)] bg-[var(--color-maintenance-soft)]"
               />
             ) : products.length === 0 ? (
               <EmptyState
                 title="Belum ada produk aktif"
                 description="Tambahkan produk dulu dari admin panel sebelum kasir menjual item."
-                className="border-white/15 bg-white/[0.03]"
-                titleClassName="text-white"
-                descriptionClassName="text-slate-400"
+                className="border-[var(--color-border)] bg-[var(--color-surface-soft)]"
+                titleClassName="text-[var(--color-text)]"
+                descriptionClassName="text-[var(--color-muted)]"
               />
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
@@ -209,13 +220,14 @@ function AddItemModal({ transaction, onClose }) {
                   return (
                     <div
                       key={product.id}
-                      className={`rounded-[1.5rem] border p-4 transition ${
-                        isOutOfStock
-                          ? "border-white/10 bg-white/[0.03] opacity-60"
-                          : quantity > 0
-                            ? "border-orange-400/70 bg-orange-500/10"
-                            : "border-white/10 bg-white/[0.04] hover:border-white/20 hover:bg-white/[0.06]"
-                      }`}
+                      className="rounded-[14px] border p-4 transition"
+                      style={{
+                        borderColor:
+                          quantity > 0 ? theme.colors.available : theme.colors.border,
+                        backgroundColor:
+                          quantity > 0 ? theme.colors.availableSoft : theme.colors.surfaceSoft,
+                        opacity: isOutOfStock ? 0.6 : 1,
+                      }}
                     >
                       <button
                         type="button"
@@ -225,32 +237,33 @@ function AddItemModal({ transaction, onClose }) {
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <p className="text-lg font-semibold text-white">{product.name}</p>
-                            <p className="mt-1 text-sm text-slate-400">
+                            <p className="text-lg font-semibold text-[var(--color-text)]">
+                              {product.name}
+                            </p>
+                            <p className="mt-1 font-display-number text-sm text-[var(--color-muted)]">
                               {formatRupiah(product.price)}
                             </p>
                           </div>
 
-                          <span
-                            className={`rounded-full px-3 py-1 text-xs font-semibold ${
-                              isOutOfStock
-                                ? "bg-rose-500/15 text-rose-200"
-                                : "bg-emerald-500/15 text-emerald-200"
-                            }`}
-                          >
-                            Stok {stock}
-                          </span>
+                          <span className="mode-badge mode-badge--open">Stok {stock}</span>
                         </div>
 
                         <div className="mt-5 flex items-center justify-between gap-3">
-                          <span className="text-sm text-slate-300">
+                          <span className="text-sm text-[var(--color-muted)]">
                             {isOutOfStock
                               ? "Stok habis"
                               : isMaxed
                                 ? "Stok maksimum dipilih"
                                 : "Klik untuk tambah +1"}
                           </span>
-                          <span className="rounded-2xl bg-white/10 px-3 py-2 text-sm font-semibold text-white">
+                          <span
+                            className="rounded-[10px] border px-3 py-2 text-sm font-semibold"
+                            style={{
+                              borderColor: theme.colors.border,
+                              backgroundColor: theme.colors.surface,
+                              color: theme.colors.text,
+                            }}
+                          >
                             Qty {quantity}
                           </span>
                         </div>
@@ -261,7 +274,7 @@ function AddItemModal({ transaction, onClose }) {
                           type="button"
                           disabled={quantity === 0 || addItemsMutation.isPending}
                           onClick={() => decreaseQuantity(product.id)}
-                          className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-white/10 bg-white/5 text-slate-200 transition hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-40"
+                          className="app-button app-button--ghost min-h-10 w-10 p-0"
                         >
                           <Minus className="h-4 w-4" />
                         </button>
@@ -269,7 +282,11 @@ function AddItemModal({ transaction, onClose }) {
                           type="button"
                           disabled={isOutOfStock || addItemsMutation.isPending || isMaxed}
                           onClick={() => increaseQuantity(product)}
-                          className="ml-2 inline-flex h-10 w-10 items-center justify-center rounded-2xl bg-orange-500 text-white transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-40"
+                          className={`ml-2 app-button min-h-10 w-10 p-0 ${
+                            isOutOfStock || addItemsMutation.isPending || isMaxed
+                              ? "app-button--disabled"
+                              : "app-button--primary"
+                          }`}
                         >
                           <Plus className="h-4 w-4" />
                         </button>
@@ -281,14 +298,29 @@ function AddItemModal({ transaction, onClose }) {
             )}
           </div>
 
-          <div className="flex flex-col rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-5">
+          <div
+            className="flex flex-col rounded-[16px] border p-5"
+            style={{
+              borderColor: theme.colors.border,
+              backgroundColor: theme.colors.surfaceSoft,
+            }}
+          >
             <div className="flex items-center gap-3">
-              <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-500/15 text-orange-300">
+              <div
+                className="inline-flex h-11 w-11 items-center justify-center rounded-[12px] border"
+                style={{
+                  borderColor: theme.colors.border,
+                  backgroundColor: theme.colors.surface,
+                  color: theme.colors.text,
+                }}
+              >
                 <ShoppingBasket className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-sm text-slate-400">Ringkasan item</p>
-                <p className="text-xl font-semibold text-white">{totalQuantity} item</p>
+                <p className="text-sm text-[var(--color-muted)]">Ringkasan item</p>
+                <p className="text-xl font-semibold text-[var(--color-text)]">
+                  {totalQuantity} item
+                </p>
               </div>
             </div>
 
@@ -297,23 +329,27 @@ function AddItemModal({ transaction, onClose }) {
                 <EmptyState
                   title="Belum ada produk dipilih"
                   description="Klik produk di sebelah kiri untuk menambahkan item ke transaksi."
-                  className="border-white/10 bg-slate-950/60"
-                  titleClassName="text-white"
-                  descriptionClassName="text-slate-400"
+                  className="border-[var(--color-border)] bg-[var(--color-surface)]"
+                  titleClassName="text-[var(--color-text)]"
+                  descriptionClassName="text-[var(--color-muted)]"
                 />
               ) : (
                 selectedEntries.map((item) => (
                   <div
                     key={item.productId}
-                    className="rounded-[1.25rem] border border-white/10 bg-slate-950/60 px-4 py-4"
+                    className="rounded-[12px] border px-4 py-4"
+                    style={{
+                      borderColor: theme.colors.border,
+                      backgroundColor: theme.colors.surface,
+                    }}
                   >
                     <div className="flex items-center justify-between gap-3">
-                      <p className="font-medium text-white">{item.productName}</p>
-                      <span className="text-sm text-slate-300">x{item.quantity}</span>
+                      <p className="font-medium text-[var(--color-text)]">{item.productName}</p>
+                      <span className="text-sm text-[var(--color-muted)]">x{item.quantity}</span>
                     </div>
-                    <div className="mt-2 flex items-center justify-between gap-3 text-sm text-slate-400">
-                      <span>{formatRupiah(item.price)}</span>
-                      <span className="font-medium text-slate-200">
+                    <div className="mt-2 flex items-center justify-between gap-3 text-sm text-[var(--color-muted)]">
+                      <span className="font-display-number">{formatRupiah(item.price)}</span>
+                      <span className="font-display-number font-medium text-[var(--color-text)]">
                         {formatRupiah(item.price * item.quantity)}
                       </span>
                     </div>
@@ -322,10 +358,13 @@ function AddItemModal({ transaction, onClose }) {
               )}
             </div>
 
-            <div className="mt-5 border-t border-white/10 pt-4">
-              <div className="flex items-center justify-between gap-3 text-sm text-slate-400">
+            <div
+              className="mt-5 border-t pt-4"
+              style={{ borderColor: theme.colors.border }}
+            >
+              <div className="flex items-center justify-between gap-3 text-sm text-[var(--color-muted)]">
                 <span>Total sementara</span>
-                <span className="text-lg font-semibold text-white">
+                <span className="font-display-number text-lg font-semibold text-[var(--color-text)]">
                   {formatRupiah(totalAmount)}
                 </span>
               </div>
@@ -340,7 +379,14 @@ function AddItemModal({ transaction, onClose }) {
                   productsQuery.isLoading ||
                   productsQuery.isError
                 }
-                className="rounded-2xl bg-orange-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-60"
+                className={`app-button ${
+                  addItemsMutation.isPending ||
+                  selectedEntries.length === 0 ||
+                  productsQuery.isLoading ||
+                  productsQuery.isError
+                    ? "app-button--disabled"
+                    : "app-button--primary"
+                }`}
               >
                 {addItemsMutation.isPending ? "Menyimpan item..." : "Tambah ke Transaksi"}
               </button>
@@ -348,7 +394,7 @@ function AddItemModal({ transaction, onClose }) {
                 type="button"
                 onClick={onClose}
                 disabled={addItemsMutation.isPending}
-                className="rounded-2xl border border-white/10 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
+                className="app-button app-button--ghost"
               >
                 Batal
               </button>

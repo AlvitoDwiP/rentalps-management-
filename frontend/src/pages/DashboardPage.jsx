@@ -1,13 +1,13 @@
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
 import { toast } from "sonner";
 
 import ActiveTransactionPanel from "../components/ActiveTransactionPanel.jsx";
 import AddItemModal from "../components/AddItemModal.jsx";
+import ConsoleGrid from "../components/ConsoleGrid.jsx";
 import DashboardHeader from "../components/DashboardHeader.jsx";
 import FinishTransactionModal from "../components/FinishTransactionModal.jsx";
 import MoveConsoleModal from "../components/MoveConsoleModal.jsx";
-import ConsoleGrid from "../components/ConsoleGrid.jsx";
 import StartTransactionModal from "../components/StartTransactionModal.jsx";
 import SummaryCards from "../components/SummaryCards.jsx";
 import {
@@ -23,7 +23,8 @@ import {
 function DashboardPage() {
   const queryClient = useQueryClient();
   const [selectedConsole, setSelectedConsole] = useState(null);
-  const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [selectedTransactionId, setSelectedTransactionId] = useState(null);
+  const [selectedFinishTransaction, setSelectedFinishTransaction] = useState(null);
   const [selectedAddItemTransaction, setSelectedAddItemTransaction] = useState(null);
   const [selectedMoveConsoleTransaction, setSelectedMoveConsoleTransaction] =
     useState(null);
@@ -76,7 +77,7 @@ function DashboardPage() {
     mutationFn: finishTransactionRequest,
     onSuccess: async () => {
       toast.success("Transaksi selesai.");
-      setSelectedTransaction(null);
+      setSelectedFinishTransaction(null);
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["consoles"] }),
         queryClient.invalidateQueries({ queryKey: ["active-transactions"] }),
@@ -89,11 +90,34 @@ function DashboardPage() {
   const activeTransactions = activeTransactionsQuery.data || [];
   const packages = packagesQuery.data || [];
 
+  useEffect(() => {
+    if (activeTransactions.length === 0) {
+      setSelectedTransactionId(null);
+      return;
+    }
+
+    const hasSelectedTransaction = activeTransactions.some(
+      (transaction) => transaction.id === selectedTransactionId,
+    );
+
+    if (!selectedTransactionId || !hasSelectedTransaction) {
+      setSelectedTransactionId(activeTransactions[0].id);
+    }
+  }, [activeTransactions, selectedTransactionId]);
+
+  const selectedTransaction = useMemo(
+    () =>
+      activeTransactions.find((transaction) => transaction.id === selectedTransactionId) ||
+      null,
+    [activeTransactions, selectedTransactionId],
+  );
+
   const summary = {
-    total: consoles.length,
     available: consoles.filter((item) => item.status === "AVAILABLE").length,
     inUse: consoles.filter((item) => item.status === "IN_USE").length,
     maintenance: consoles.filter((item) => item.status === "MAINTENANCE").length,
+    revenueToday: 0,
+    transactions: activeTransactions.length,
   };
 
   async function handleStartTransaction(payload) {
@@ -105,22 +129,26 @@ function DashboardPage() {
     await startOpenMutation.mutateAsync(payload);
   }
 
-  async function handleFinishTransaction() {
-    if (!selectedTransaction) {
+  async function handleFinishTransaction(transaction) {
+    if (!transaction) {
       return;
     }
 
-    await finishMutation.mutateAsync(selectedTransaction.id);
+    await finishMutation.mutateAsync(transaction.id);
+  }
+
+  function handleSelectTransaction(transaction) {
+    setSelectedTransactionId(transaction?.id || null);
   }
 
   return (
-    <main className="min-h-screen px-4 py-5 sm:px-6 lg:px-8">
-      <div className="mx-auto flex max-w-7xl flex-col gap-5">
-        <DashboardHeader />
+    <main className="dashboard-shell">
+      <div className="mx-auto flex max-w-[1480px] flex-col gap-5">
+        <DashboardHeader activeTransactionCount={activeTransactions.length} />
 
         <SummaryCards summary={summary} isLoading={consolesQuery.isLoading} />
 
-        <div className="grid gap-5 xl:grid-cols-[1.45fr_0.95fr]">
+        <div className="cashier-main-layout">
           <ConsoleGrid
             consoles={consoles}
             activeTransactions={activeTransactions}
@@ -128,10 +156,13 @@ function DashboardPage() {
             isError={consolesQuery.isError && consoles.length === 0}
             onRetry={() => consolesQuery.refetch()}
             onSelectConsole={setSelectedConsole}
+            onSelectTransaction={handleSelectTransaction}
+            selectedTransactionId={selectedTransactionId}
           />
 
           <ActiveTransactionPanel
             transactions={activeTransactions}
+            selectedTransaction={selectedTransaction}
             isLoading={
               activeTransactionsQuery.isLoading && activeTransactions.length === 0
             }
@@ -139,7 +170,8 @@ function DashboardPage() {
               activeTransactionsQuery.isError && activeTransactions.length === 0
             }
             onRetry={() => activeTransactionsQuery.refetch()}
-            onFinish={setSelectedTransaction}
+            onSelectTransaction={handleSelectTransaction}
+            onFinish={setSelectedFinishTransaction}
             onAddItem={setSelectedAddItemTransaction}
             onMoveConsole={setSelectedMoveConsoleTransaction}
           />
@@ -149,19 +181,17 @@ function DashboardPage() {
       <StartTransactionModal
         consoleUnit={selectedConsole}
         packages={packages}
-        isSubmitting={
-          startOpenMutation.isPending || startPackageMutation.isPending
-        }
+        isSubmitting={startOpenMutation.isPending || startPackageMutation.isPending}
         isPackagesLoading={packagesQuery.isLoading}
         onClose={() => setSelectedConsole(null)}
         onSubmit={handleStartTransaction}
       />
 
       <FinishTransactionModal
-        transaction={selectedTransaction}
+        transaction={selectedFinishTransaction}
         isSubmitting={finishMutation.isPending}
-        onClose={() => setSelectedTransaction(null)}
-        onConfirm={handleFinishTransaction}
+        onClose={() => setSelectedFinishTransaction(null)}
+        onConfirm={() => handleFinishTransaction(selectedFinishTransaction)}
       />
 
       <AddItemModal

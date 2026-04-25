@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 import { BadgeDollarSign, Clock3, X } from "lucide-react";
+
+import { formatRupiah } from "../lib/format.js";
+import { theme } from "../lib/theme.js";
 import EmptyState from "./EmptyState.jsx";
 
 function StartTransactionModal({
@@ -60,17 +63,20 @@ function StartTransactionModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/45 p-4 backdrop-blur-sm sm:items-center">
-      <div className="w-full max-w-2xl overflow-hidden rounded-[2rem] border border-white/70 bg-white shadow-[0_35px_120px_-45px_rgba(15,23,42,0.5)]">
-        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-5 sm:px-6">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-4 backdrop-blur-sm sm:items-center">
+      <div className="dashboard-panel w-full max-w-2xl overflow-hidden">
+        <div
+          className="flex items-start justify-between gap-4 border-b px-5 py-5 sm:px-6"
+          style={{ borderColor: theme.colors.border }}
+        >
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-orange-500">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-muted)]">
               Start Transaction
             </p>
-            <h3 className="mt-2 text-3xl font-semibold text-slate-950">
+            <h3 className="mt-2 text-3xl font-semibold text-[var(--color-text)]">
               {consoleUnit.code}
             </h3>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-[var(--color-muted)]">
               Tipe {consoleUnit.consoleType} siap dipakai untuk billing baru.
             </p>
           </div>
@@ -79,7 +85,7 @@ function StartTransactionModal({
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="app-button app-button--ghost min-h-11 w-11 p-0"
           >
             <X className="h-5 w-5" />
           </button>
@@ -91,17 +97,18 @@ function StartTransactionModal({
               type="button"
               onClick={() => setMode("OPEN")}
               disabled={isSubmitting}
-              className={`rounded-[1.5rem] border px-4 py-4 text-left transition ${
-                mode === "OPEN"
-                  ? "border-slate-950 bg-slate-950 text-white"
-                  : "border-slate-200 bg-slate-50 text-slate-700"
-              } disabled:cursor-not-allowed disabled:opacity-60`}
+              className="rounded-[14px] border px-4 py-4 text-left transition disabled:cursor-not-allowed disabled:opacity-60"
+              style={{
+                borderColor: mode === "OPEN" ? theme.colors.inUse : theme.colors.border,
+                backgroundColor: mode === "OPEN" ? theme.colors.inUseSoft : theme.colors.surfaceSoft,
+                color: theme.colors.text,
+              }}
             >
               <div className="flex items-center gap-3">
                 <Clock3 className="h-5 w-5" />
                 <div>
                   <p className="font-semibold">OPEN</p>
-                  <p className="text-sm opacity-80">Billing jalan per menit</p>
+                  <p className="text-sm text-[var(--color-muted)]">Billing jalan per menit</p>
                 </div>
               </div>
             </button>
@@ -110,40 +117,49 @@ function StartTransactionModal({
               type="button"
               onClick={() => setMode("PACKAGE")}
               disabled={isSubmitting}
-              className={`rounded-[1.5rem] border px-4 py-4 text-left transition ${
-                mode === "PACKAGE"
-                  ? "border-orange-500 bg-orange-500 text-white"
-                  : "border-slate-200 bg-slate-50 text-slate-700"
-              } disabled:cursor-not-allowed disabled:opacity-60`}
+              className="rounded-[14px] border px-4 py-4 text-left transition disabled:cursor-not-allowed disabled:opacity-60"
+              style={{
+                borderColor:
+                  mode === "PACKAGE" ? theme.colors.available : theme.colors.border,
+                backgroundColor:
+                  mode === "PACKAGE"
+                    ? theme.colors.availableSoft
+                    : theme.colors.surfaceSoft,
+                color: theme.colors.text,
+              }}
             >
               <div className="flex items-center gap-3">
                 <BadgeDollarSign className="h-5 w-5" />
                 <div>
                   <p className="font-semibold">PACKAGE</p>
-                  <p className="text-sm opacity-80">Pilih durasi tetap lebih cepat</p>
+                  <p className="text-sm text-[var(--color-muted)]">
+                    Pilih durasi tetap lebih cepat
+                  </p>
                 </div>
               </div>
             </button>
           </div>
 
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">Nama customer</span>
+            <span className="text-sm font-medium text-[var(--color-text)]">Nama customer</span>
             <input
               type="text"
               value={customerName}
               onChange={(event) => setCustomerName(event.target.value)}
               disabled={isSubmitting}
               placeholder="Opsional, contoh: Budi"
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-100"
+              className="panel-input"
             />
           </label>
 
           {mode === "PACKAGE" ? (
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-3">
-                <span className="text-sm font-medium text-slate-700">Pilih package</span>
+                <span className="text-sm font-medium text-[var(--color-text)]">
+                  Pilih package
+                </span>
                 {isPackagesLoading ? (
-                  <span className="text-xs text-slate-400">Memuat package...</span>
+                  <span className="text-xs text-[var(--color-muted)]">Memuat package...</span>
                 ) : null}
               </div>
 
@@ -152,28 +168,34 @@ function StartTransactionModal({
                   <EmptyState
                     title="Belum ada package aktif"
                     description={`Belum ada package aktif untuk ${consoleUnit.consoleType}.`}
-                    className="rounded-2xl"
+                    className="rounded-[14px] border-[var(--color-border)] bg-[var(--color-surface-soft)]"
+                    titleClassName="text-[var(--color-text)]"
+                    descriptionClassName="text-[var(--color-muted)]"
                   />
                 ) : (
                   filteredPackages.map((item) => (
                     <label
                       key={item.id}
-                      className={`flex cursor-pointer items-center justify-between rounded-2xl border px-4 py-4 transition ${
-                        packageId === item.id
-                          ? "border-orange-500 bg-orange-50"
-                          : "border-slate-200 bg-white"
-                      }`}
+                      className="flex cursor-pointer items-center justify-between rounded-[14px] border px-4 py-4 transition"
+                      style={{
+                        borderColor:
+                          packageId === item.id ? theme.colors.available : theme.colors.border,
+                        backgroundColor:
+                          packageId === item.id
+                            ? theme.colors.availableSoft
+                            : theme.colors.surfaceSoft,
+                      }}
                     >
                       <div>
-                        <p className="font-semibold text-slate-900">{item.name}</p>
-                        <p className="text-sm text-slate-500">
+                        <p className="font-semibold text-[var(--color-text)]">{item.name}</p>
+                        <p className="text-sm text-[var(--color-muted)]">
                           {item.durationMinutes} menit
                         </p>
                       </div>
 
                       <div className="flex items-center gap-3">
-                        <span className="text-sm font-semibold text-slate-900">
-                          Rp{item.price}
+                        <span className="font-display-number text-sm font-semibold text-[var(--color-text)]">
+                          {formatRupiah(item.price)}
                         </span>
                         <input
                           type="radio"
@@ -190,12 +212,15 @@ function StartTransactionModal({
             </div>
           ) : null}
 
-          <div className="flex flex-col-reverse gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
+          <div
+            className="flex flex-col-reverse gap-3 border-t pt-4 sm:flex-row sm:justify-end"
+            style={{ borderColor: theme.colors.border }}
+          >
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50"
+              className="app-button app-button--ghost"
             >
               Batal
             </button>
@@ -205,7 +230,12 @@ function StartTransactionModal({
                 isSubmitting ||
                 (mode === "PACKAGE" && (!packageId || filteredPackages.length === 0))
               }
-              className="rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:opacity-60"
+              className={`app-button ${
+                isSubmitting ||
+                (mode === "PACKAGE" && (!packageId || filteredPackages.length === 0))
+                  ? "app-button--disabled"
+                  : "app-button--primary"
+              }`}
             >
               {isSubmitting ? "Menyimpan..." : "Mulai Transaksi"}
             </button>

@@ -6,64 +6,44 @@ import {
   UserRound,
   X,
 } from "lucide-react";
+
 import {
   formatDateTime,
-  formatDuration,
+  formatClockDuration,
   formatRupiah,
 } from "../lib/format.js";
-
-function calculateLiveDurationMinutes(startTime) {
-  const diffMs = Date.now() - new Date(startTime).getTime();
-
-  if (diffMs <= 0) {
-    return 0;
-  }
-
-  return Math.ceil(diffMs / 60000);
-}
-
-function calculateLiveRentalTotal(transaction) {
-  if (transaction.pricingType === "PACKAGE") {
-    return transaction.rentalTotal;
-  }
-
-  const durationMinutes = calculateLiveDurationMinutes(transaction.startTime);
-
-  if (!durationMinutes) {
-    return 0;
-  }
-
-  return Math.ceil((Number(transaction.hourlyRateSnapshot) * durationMinutes) / 60);
-}
+import useNow from "../hooks/useNow.js";
+import { getTransactionEstimate } from "../lib/billingEstimate.js";
+import { theme } from "../lib/theme.js";
 
 function FinishTransactionModal({ transaction, isSubmitting, onClose, onConfirm }) {
+  const now = useNow(1000);
+
   if (!transaction) {
     return null;
   }
 
-  const durationMinutes = transaction.durationMinutes ?? calculateLiveDurationMinutes(
-    transaction.startTime,
-  );
-  const rentalTotalPreview =
-    transaction.status === "COMPLETED"
-      ? Number(transaction.rentalTotal || 0)
-      : calculateLiveRentalTotal(transaction);
-  const productTotal = Number(transaction.productTotal || 0);
-  const grandTotalPreview = rentalTotalPreview + productTotal;
+  const estimate = getTransactionEstimate(transaction, now);
+  const rentalTotalPreview = estimate.estimatedRentalTotal;
+  const productTotal = estimate.productTotal;
+  const grandTotalPreview = estimate.estimatedGrandTotal;
   const items = transaction.items || [];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/45 p-4 backdrop-blur-sm sm:items-center">
-      <div className="w-full max-w-4xl overflow-hidden rounded-[2rem] border border-white/70 bg-white shadow-[0_35px_120px_-45px_rgba(15,23,42,0.5)]">
-        <div className="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-5 sm:px-6">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/55 p-4 backdrop-blur-sm sm:items-center">
+      <div className="dashboard-panel w-full max-w-4xl overflow-hidden">
+        <div
+          className="flex items-start justify-between gap-4 border-b px-5 py-5 sm:px-6"
+          style={{ borderColor: theme.colors.border }}
+        >
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-orange-500">
+            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-[var(--color-muted)]">
               Finish Transaction
             </p>
-            <h3 className="mt-2 text-3xl font-semibold text-slate-950">
+            <h3 className="mt-2 text-3xl font-semibold text-[var(--color-text)]">
               {transaction.playStationUnit?.code}
             </h3>
-            <p className="mt-1 text-sm text-slate-500">
+            <p className="mt-1 text-sm text-[var(--color-muted)]">
               {transaction.customerName || "Walk-in Customer"}
             </p>
           </div>
@@ -72,7 +52,7 @@ function FinishTransactionModal({ transaction, isSubmitting, onClose, onConfirm 
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-slate-200 text-slate-500 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
+            className="app-button app-button--ghost min-h-11 w-11 p-0"
           >
             <X className="h-5 w-5" />
           </button>
@@ -81,34 +61,60 @@ function FinishTransactionModal({ transaction, isSubmitting, onClose, onConfirm 
         <div className="grid gap-5 px-5 py-5 sm:px-6 lg:grid-cols-[1.05fr_0.95fr]">
           <div className="space-y-5">
             <div className="grid gap-4 sm:grid-cols-2">
-              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
+              <div
+                className="rounded-[14px] border p-4"
+                style={{
+                  borderColor: theme.colors.border,
+                  backgroundColor: theme.colors.surfaceSoft,
+                }}
+              >
                 <div className="flex items-center gap-3">
-                  <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-white">
+                  <div
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-[12px] border"
+                    style={{
+                      borderColor: theme.colors.border,
+                      backgroundColor: theme.colors.surface,
+                      color: theme.colors.text,
+                    }}
+                  >
                     <Gamepad2 className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500">Console</p>
-                    <p className="text-2xl font-semibold text-slate-950">
+                    <p className="text-sm text-[var(--color-muted)]">Console</p>
+                    <p className="text-2xl font-semibold text-[var(--color-text)]">
                       {transaction.playStationUnit?.code}
                     </p>
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-[var(--color-muted)]">
                       {transaction.playStationUnit?.consoleType || "-"}
                     </p>
                   </div>
                 </div>
               </div>
 
-              <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
+              <div
+                className="rounded-[14px] border p-4"
+                style={{
+                  borderColor: theme.colors.border,
+                  backgroundColor: theme.colors.surfaceSoft,
+                }}
+              >
                 <div className="flex items-center gap-3">
-                  <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-amber-100 text-amber-700">
+                  <div
+                    className="inline-flex h-11 w-11 items-center justify-center rounded-[12px] border"
+                    style={{
+                      borderColor: theme.colors.border,
+                      backgroundColor: theme.colors.surface,
+                      color: theme.colors.inUse,
+                    }}
+                  >
                     <Timer className="h-5 w-5" />
                   </div>
                   <div>
-                    <p className="text-sm text-slate-500">Durasi</p>
-                    <p className="text-2xl font-semibold text-slate-950">
-                      {formatDuration(durationMinutes)}
+                    <p className="text-sm text-[var(--color-muted)]">Durasi</p>
+                    <p className="font-display-number text-2xl font-semibold text-[var(--color-text)]">
+                      {formatClockDuration(estimate.elapsedSeconds)}
                     </p>
-                    <p className="text-sm text-slate-500">
+                    <p className="text-sm text-[var(--color-muted)]">
                       Mulai {formatDateTime(transaction.startTime)}
                     </p>
                   </div>
@@ -116,30 +122,62 @@ function FinishTransactionModal({ transaction, isSubmitting, onClose, onConfirm 
               </div>
             </div>
 
-            <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5">
+            <div
+              className="rounded-[16px] border p-5"
+              style={{
+                borderColor: theme.colors.border,
+                backgroundColor: theme.colors.surfaceSoft,
+              }}
+            >
               <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
+                <div
+                  className="rounded-[14px] border p-4"
+                  style={{
+                    borderColor: theme.colors.border,
+                    backgroundColor: theme.colors.surface,
+                  }}
+                >
                   <div className="flex items-center gap-3">
-                    <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-orange-100 text-orange-700">
+                    <div
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-[12px] border"
+                      style={{
+                        borderColor: theme.colors.border,
+                        backgroundColor: theme.colors.surfaceSoft,
+                        color: theme.colors.text,
+                      }}
+                    >
                       <UserRound className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="text-sm text-slate-500">Customer</p>
-                      <p className="text-lg font-semibold text-slate-950">
+                      <p className="text-sm text-[var(--color-muted)]">Customer</p>
+                      <p className="text-lg font-semibold text-[var(--color-text)]">
                         {transaction.customerName || "Walk-in Customer"}
                       </p>
                     </div>
                   </div>
                 </div>
 
-                <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
+                <div
+                  className="rounded-[14px] border p-4"
+                  style={{
+                    borderColor: theme.colors.border,
+                    backgroundColor: theme.colors.surface,
+                  }}
+                >
                   <div className="flex items-center gap-3">
-                    <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+                    <div
+                      className="inline-flex h-11 w-11 items-center justify-center rounded-[12px] border"
+                      style={{
+                        borderColor: theme.colors.border,
+                        backgroundColor: theme.colors.surfaceSoft,
+                        color: theme.colors.available,
+                      }}
+                    >
                       <Receipt className="h-5 w-5" />
                     </div>
                     <div>
-                      <p className="text-sm text-slate-500">Mode transaksi</p>
-                      <p className="text-lg font-semibold text-slate-950">
+                      <p className="text-sm text-[var(--color-muted)]">Mode transaksi</p>
+                      <p className="text-lg font-semibold text-[var(--color-text)]">
                         {transaction.pricingType}
                       </p>
                     </div>
@@ -148,14 +186,27 @@ function FinishTransactionModal({ transaction, isSubmitting, onClose, onConfirm 
               </div>
             </div>
 
-            <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5">
+            <div
+              className="rounded-[16px] border p-5"
+              style={{
+                borderColor: theme.colors.border,
+                backgroundColor: theme.colors.surfaceSoft,
+              }}
+            >
               <div className="flex items-center gap-3">
-                <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-white">
+                <div
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-[12px] border"
+                  style={{
+                    borderColor: theme.colors.border,
+                    backgroundColor: theme.colors.surface,
+                    color: theme.colors.text,
+                  }}
+                >
                   <ShoppingBasket className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-lg font-semibold text-slate-950">Item produk</p>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-lg font-semibold text-[var(--color-text)]">Item produk</p>
+                  <p className="text-sm text-[var(--color-muted)]">
                     Pastikan semua snack dan minuman sudah tercatat sebelum transaksi ditutup.
                   </p>
                 </div>
@@ -163,25 +214,36 @@ function FinishTransactionModal({ transaction, isSubmitting, onClose, onConfirm 
 
               <div className="mt-5 space-y-3">
                 {items.length === 0 ? (
-                  <div className="rounded-[1.5rem] border border-dashed border-slate-300 bg-slate-50 px-4 py-5 text-sm text-slate-500">
+                  <div
+                    className="rounded-[14px] border px-4 py-5 text-sm"
+                    style={{
+                      borderColor: theme.colors.border,
+                      backgroundColor: theme.colors.surface,
+                      color: theme.colors.muted,
+                    }}
+                  >
                     Belum ada item produk di transaksi ini.
                   </div>
                 ) : (
                   items.map((item) => (
                     <div
                       key={item.id}
-                      className="rounded-[1.5rem] border border-slate-200 bg-slate-50 px-4 py-4"
+                      className="rounded-[14px] border px-4 py-4"
+                      style={{
+                        borderColor: theme.colors.border,
+                        backgroundColor: theme.colors.surface,
+                      }}
                     >
                       <div className="flex items-center justify-between gap-3">
                         <div>
-                          <p className="font-semibold text-slate-950">
+                          <p className="font-semibold text-[var(--color-text)]">
                             {item.productNameSnapshot || item.product?.name}
                           </p>
-                          <p className="mt-1 text-sm text-slate-500">
+                          <p className="mt-1 text-sm text-[var(--color-muted)]">
                             Qty {item.quantity} x {formatRupiah(item.unitPriceSnapshot)}
                           </p>
                         </div>
-                        <span className="text-base font-semibold text-slate-950">
+                        <span className="font-display-number text-base font-semibold text-[var(--color-text)]">
                           {formatRupiah(item.subtotalSnapshot)}
                         </span>
                       </div>
@@ -193,98 +255,128 @@ function FinishTransactionModal({ transaction, isSubmitting, onClose, onConfirm 
           </div>
 
           <div className="space-y-5">
-            <div className="rounded-[1.5rem] border border-slate-200 bg-slate-50 p-4">
+            <div
+              className="rounded-[14px] border p-4"
+              style={{
+                borderColor: theme.colors.inUse,
+                backgroundColor: theme.colors.inUseSoft,
+              }}
+            >
               <div className="flex items-center gap-3">
-                <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700">
+                <div
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-[12px] border"
+                  style={{
+                    borderColor: theme.colors.border,
+                    backgroundColor: theme.colors.surface,
+                    color: theme.colors.available,
+                  }}
+                >
                   <Receipt className="h-5 w-5" />
                 </div>
                 <div>
-                  <p className="text-sm text-slate-500">Grand total</p>
-                  <p className="text-2xl font-semibold text-slate-950">
+                  <p className="text-sm text-[var(--color-muted)]">Grand total</p>
+                  <p className="font-display-number text-2xl font-semibold text-[var(--color-text)]">
                     {formatRupiah(grandTotalPreview)}
                   </p>
-                  <p className="text-sm text-slate-500">Final check sebelum billing ditutup</p>
+                  <p className="text-sm text-[var(--color-muted)]">
+                    Final check sebelum billing ditutup
+                  </p>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-[1.75rem] border border-slate-200 bg-white p-5">
-              <div className="space-y-4 text-sm text-slate-600">
+            <div
+              className="rounded-[16px] border p-5"
+              style={{
+                borderColor: theme.colors.border,
+                backgroundColor: theme.colors.surfaceSoft,
+              }}
+            >
+              <div className="space-y-4 text-sm text-[var(--color-muted)]">
                 <div className="flex items-center justify-between gap-3">
                   <span>Console type</span>
-                  <span className="font-medium text-slate-950">
+                  <span className="font-medium text-[var(--color-text)]">
                     {transaction.playStationUnit?.consoleType || "-"}
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span>Start time</span>
-                  <span className="font-medium text-slate-950">
+                  <span className="font-medium text-[var(--color-text)]">
                     {formatDateTime(transaction.startTime)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span>Durasi berjalan</span>
-                  <span className="font-medium text-slate-950">
-                    {formatDuration(durationMinutes)}
+                  <span className="font-display-number font-medium text-[var(--color-text)]">
+                    {formatClockDuration(estimate.elapsedSeconds)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span>Tipe transaksi</span>
-                  <span className="font-semibold text-slate-950">
+                  <span className="font-semibold text-[var(--color-text)]">
                     {transaction.pricingType}
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span>Rental total</span>
-                  <span className="font-medium text-slate-950">
+                  <span className="font-display-number font-medium text-[var(--color-text)]">
                     {formatRupiah(rentalTotalPreview)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span>Produk total</span>
-                  <span className="font-medium text-slate-950">
+                  <span className="font-display-number font-medium text-[var(--color-text)]">
                     {formatRupiah(productTotal)}
                   </span>
                 </div>
                 <div className="flex items-center justify-between gap-3">
                   <span>Jumlah item</span>
-                  <span className="font-medium text-slate-950">{items.length}</span>
+                  <span className="font-medium text-[var(--color-text)]">{items.length}</span>
                 </div>
-                <div className="flex items-center justify-between gap-3 border-t border-dashed border-slate-200 pt-4 text-base">
-                  <span className="font-medium text-slate-700">Grand total</span>
-                  <span className="text-2xl font-bold text-rose-600">
+                <div
+                  className="flex items-center justify-between gap-3 border-t pt-4 text-base"
+                  style={{ borderColor: theme.colors.border }}
+                >
+                  <span className="font-medium text-[var(--color-text)]">Grand total</span>
+                  <span className="font-display-number text-2xl font-bold text-[var(--color-available)]">
                     {formatRupiah(grandTotalPreview)}
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="rounded-[1.75rem] border border-rose-200 bg-rose-50 p-5">
-              <p className="text-sm leading-6 text-rose-700">
+            <div
+              className="rounded-[16px] border p-5"
+              style={{
+                borderColor: theme.colors.maintenance,
+                backgroundColor: theme.colors.maintenanceSoft,
+              }}
+            >
+              <p className="text-sm leading-6 text-[var(--color-text)]">
                 Setelah transaksi diselesaikan, console akan kembali AVAILABLE dan billing
                 tidak bisa dilanjutkan lagi dari sesi ini.
               </p>
             </div>
 
             <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-              <div className="flex items-center justify-between gap-3">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  disabled={isSubmitting}
-                  className="rounded-2xl border border-slate-200 px-4 py-3 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  Batal
-                </button>
-                <button
-                  type="button"
-                  disabled={isSubmitting}
-                  onClick={onConfirm}
-                  className="rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-60"
-                >
-                  {isSubmitting ? "Menyelesaikan..." : "Selesaikan Transaksi"}
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={onClose}
+                disabled={isSubmitting}
+                className="app-button app-button--ghost"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={onConfirm}
+                className={`app-button ${
+                  isSubmitting ? "app-button--disabled" : "app-button--danger"
+                }`}
+              >
+                {isSubmitting ? "Menyelesaikan..." : "Selesaikan Transaksi"}
+              </button>
             </div>
           </div>
         </div>

@@ -1,10 +1,38 @@
-import { LogOut, RadioTower, UserCircle2 } from "lucide-react";
+import { LayoutGrid, LogOut, Menu, ReceiptText, UserCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
+import { theme } from "../lib/theme.js";
 import useAuthStore from "../store/authStore.js";
 
-function DashboardHeader() {
+function NavItem({ icon: Icon, label, isActive = false, badge }) {
+  return (
+    <div
+      className="header-nav-item inline-flex items-center gap-2 rounded-[12px] border px-4 py-3 text-sm font-semibold"
+      style={{
+        borderColor: isActive ? theme.colors.border : "transparent",
+        backgroundColor: isActive ? theme.colors.surface : "transparent",
+        color: isActive ? theme.colors.text : theme.colors.muted,
+      }}
+    >
+      <Icon className="h-4 w-4" />
+      <span>{label}</span>
+      {badge !== undefined ? (
+        <span
+          className="inline-flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-xs"
+          style={{
+            backgroundColor: theme.colors.inUse,
+            color: theme.colors.text,
+          }}
+        >
+          {badge}
+        </span>
+      ) : null}
+    </div>
+  );
+}
+
+function DashboardHeader({ activeTransactionCount = 0 }) {
   const navigate = useNavigate();
   const user = useAuthStore((state) => state.user);
   const clearAuth = useAuthStore((state) => state.clearAuth);
@@ -16,40 +44,84 @@ function DashboardHeader() {
   }
 
   return (
-    <header className="overflow-hidden rounded-[2rem] border border-white/70 bg-white/85 shadow-[0_25px_80px_-35px_rgba(15,23,42,0.35)] backdrop-blur">
-      <div className="grid gap-5 px-5 py-5 sm:px-6 lg:grid-cols-[1fr_auto] lg:items-center">
-        <div className="space-y-3">
-          <div className="inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.26em] text-orange-600">
-            <RadioTower className="h-3.5 w-3.5" />
-            Kasir Real-Time
+    <header className="dashboard-panel dashboard-panel--header overflow-hidden">
+      <div
+        className="flex flex-wrap items-center justify-between gap-4 border-b px-5 py-4 sm:px-6"
+        style={{
+          backgroundColor: "rgba(255,255,255,0.02)",
+          borderColor: theme.colors.border,
+        }}
+      >
+        <div className="flex flex-wrap items-center gap-4">
+          <button
+            type="button"
+            className="app-button app-button--ghost min-h-14 w-14 p-0"
+            aria-label="Menu"
+          >
+            <Menu className="h-6 w-6" />
+          </button>
+
+          <div className="flex items-center gap-4">
+            <div
+              className="inline-flex h-12 w-12 items-center justify-center rounded-[12px] text-lg font-extrabold tracking-[-0.04em]"
+              style={{
+                backgroundColor: theme.colors.inUse,
+                color: theme.colors.text,
+              }}
+            >
+              PS
+            </div>
+
+            <div>
+              <p className="text-[2rem] font-semibold tracking-[-0.05em] text-[var(--color-text)]">
+                RentalPS
+              </p>
+            </div>
           </div>
-          <div>
-            <h1 className="text-3xl font-semibold text-slate-950 sm:text-4xl">
-              Dashboard Rental PlayStation
-            </h1>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
-              Pantau status console, buka transaksi baru, dan selesaikan billing
-              secepat mungkin saat outlet sedang sibuk.
-            </p>
-          </div>
+
+          <nav className="flex flex-wrap items-center gap-2">
+            <NavItem icon={LayoutGrid} label="Dashboard" isActive />
+            <NavItem
+              icon={ReceiptText}
+              label="Transaksi Aktif"
+              badge={activeTransactionCount}
+            />
+            <NavItem icon={ReceiptText} label="Riwayat" />
+          </nav>
         </div>
 
-        <div className="flex flex-col items-start gap-3 rounded-[1.5rem] border border-slate-200 bg-slate-950 px-4 py-4 text-white sm:flex-row sm:items-center">
-          <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-white/10">
-            <UserCircle2 className="h-6 w-6" />
-          </div>
-
-          <div className="min-w-0">
-            <p className="truncate text-base font-semibold">{user?.name || "Cashier"}</p>
-            <p className="text-sm text-slate-300">
-              {user?.role || "-"} · {user?.username || user?.email}
-            </p>
+        <div className="flex flex-wrap items-center gap-3">
+          <div
+            className="flex items-center gap-3 rounded-[14px] border px-4 py-3"
+            style={{
+              borderColor: theme.colors.border,
+              backgroundColor: theme.colors.surfaceSoft,
+            }}
+          >
+            <div
+              className="inline-flex h-11 w-11 items-center justify-center rounded-[12px] border"
+              style={{
+                borderColor: theme.colors.border,
+                backgroundColor: theme.colors.surface,
+                color: theme.colors.text,
+              }}
+            >
+              <UserCircle2 className="h-6 w-6" />
+            </div>
+            <div className="min-w-0">
+              <p className="truncate text-sm font-semibold text-[var(--color-text)]">
+                {user?.name || "Cashier"}
+              </p>
+              <p className="text-xs uppercase tracking-[0.12em] text-[var(--color-muted)]">
+                {user?.role || "CASHIER"}
+              </p>
+            </div>
           </div>
 
           <button
             type="button"
             onClick={handleLogout}
-            className="inline-flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/20"
+            className="app-button app-button--ghost gap-2"
           >
             <LogOut className="h-4 w-4" />
             Logout

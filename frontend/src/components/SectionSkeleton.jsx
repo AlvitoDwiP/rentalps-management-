@@ -5,7 +5,7 @@ function SectionSkeleton({ variant = "grid", count = 6 }) {
         {Array.from({ length: count }).map((_, index) => (
           <div
             key={index}
-            className="h-40 animate-pulse rounded-[1.5rem] border border-slate-200 bg-slate-100"
+            className="h-40 animate-pulse rounded-[1rem] border border-[var(--color-border)] bg-[var(--color-surface-soft)]"
           />
         ))}
       </div>
@@ -13,11 +13,11 @@ function SectionSkeleton({ variant = "grid", count = 6 }) {
   }
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+    <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
       {Array.from({ length: count }).map((_, index) => (
         <div
           key={index}
-          className="h-40 animate-pulse rounded-[1.5rem] border border-slate-200 bg-slate-100"
+          className="h-[272px] animate-pulse rounded-[1rem] border border-[var(--color-border)] bg-[var(--color-surface-soft)]"
         />
       ))}
     </div>

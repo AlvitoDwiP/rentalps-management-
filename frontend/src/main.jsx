@@ -6,6 +6,7 @@ import { Toaster } from "sonner";
 
 import "./index.css";
 import App from "./App.jsx";
+import { applyThemeVariables } from "./lib/theme.js";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -15,6 +16,8 @@ const queryClient = new QueryClient({
     },
   },
 });
+
+applyThemeVariables();
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>

@@ -1,100 +1,134 @@
 import { MonitorPlay, Wrench, Zap } from "lucide-react";
 
-import useLiveDuration from "../hooks/useLiveDuration.js";
-import { formatDuration } from "../lib/format.js";
+import { getTransactionEstimate } from "../lib/billingEstimate.js";
+import { formatClockDuration, formatDuration, formatRupiah } from "../lib/format.js";
+import { getStatusClass, getStatusTheme, theme } from "../lib/theme.js";
 
-function getStatusStyles(status) {
+function getStatusMeta(status) {
   if (status === "AVAILABLE") {
-    return {
-      chip: "bg-emerald-100 text-emerald-700 ring-emerald-200",
-      card: "border-emerald-200/80 bg-white hover:border-emerald-400 hover:shadow-emerald-500/20",
-      button: "bg-emerald-600 text-white hover:bg-emerald-700",
-      icon: Zap,
-    };
+    return { icon: Zap };
   }
 
   if (status === "IN_USE") {
-    return {
-      chip: "bg-amber-100 text-amber-700 ring-amber-200",
-      card: "border-amber-200/80 bg-amber-50/70",
-      button: "bg-slate-200 text-slate-500",
-      icon: MonitorPlay,
-    };
+    return { icon: MonitorPlay };
   }
 
-  return {
-    chip: "bg-rose-100 text-rose-700 ring-rose-200",
-    card: "border-rose-200/80 bg-rose-50/70",
-    button: "bg-slate-200 text-slate-500",
-    icon: Wrench,
-  };
+  return { icon: Wrench };
 }
 
-function ConsoleCard({ consoleUnit, activeTransaction, onSelectConsole }) {
-  const statusStyles = getStatusStyles(consoleUnit.status);
-  const StatusIcon = statusStyles.icon;
-  const canStart = consoleUnit.status === "AVAILABLE";
-  const liveDuration = useLiveDuration(activeTransaction?.startTime);
+function ConsoleCard({
+  consoleUnit,
+  activeTransaction,
+  now,
+  onSelectConsole,
+  onSelectTransaction,
+  isSelected = false,
+}) {
+  const statusMeta = getStatusMeta(consoleUnit.status);
+  const statusTheme = getStatusTheme(consoleUnit.status);
+  const StatusIcon = statusMeta.icon;
+  const statusClass = getStatusClass(consoleUnit.status);
+  const estimate = getTransactionEstimate(activeTransaction, now);
+  const isAvailable = consoleUnit.status === "AVAILABLE";
+  const isInUse = consoleUnit.status === "IN_USE" && activeTransaction;
+  const isMaintenance = consoleUnit.status === "MAINTENANCE";
+  const cardStateClass = isInUse
+    ? "console-card--in-use"
+    : isMaintenance
+      ? "console-card--maintenance"
+      : "console-card--available";
+
+  function handleCardClick() {
+    if (isAvailable) {
+      onSelectConsole(consoleUnit);
+      return;
+    }
+
+    if (isInUse) {
+      onSelectTransaction(activeTransaction);
+    }
+  }
 
   return (
     <article
-      className={`rounded-[1.5rem] border p-4 transition ${statusStyles.card}`}
+      className={`console-card ${cardStateClass} cursor-default`}
+      onClick={handleCardClick}
+      style={{
+        cursor: isAvailable || isInUse ? "pointer" : "default",
+        borderColor: isSelected && isInUse ? theme.colors.inUse : statusTheme.color,
+        boxShadow: isSelected
+          ? `0 0 0 1px ${theme.colors.inUse}, 0 20px 42px -24px rgba(47, 109, 246, 0.55)`
+          : `0 0 0 1px ${statusTheme.soft}`,
+      }}
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-400">
-            {consoleUnit.consoleType}
-          </p>
-          <h3 className="mt-2 text-2xl font-semibold text-slate-950">
+          <h3 className="text-[2rem] font-semibold tracking-[-0.04em] text-[var(--color-text)]">
             {consoleUnit.code}
           </h3>
         </div>
 
-        <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-white">
-          <StatusIcon className="h-5 w-5" />
+        <div
+          className="inline-flex h-10 w-10 items-center justify-center rounded-[10px] border text-[var(--color-text)]"
+          style={{
+            borderColor: theme.colors.border,
+            backgroundColor: statusTheme.soft,
+          }}
+        >
+          <StatusIcon className="h-4 w-4" />
         </div>
       </div>
 
-      {consoleUnit.status === "IN_USE" && activeTransaction ? (
-        <div className="mt-4 rounded-[1.25rem] border border-white/50 bg-white/60 p-3 text-sm">
-          {activeTransaction.pricingType === "OPEN" ? (
-            <>
-              <p className="text-slate-500">Durasi live</p>
-              <p className="mt-1 text-lg font-semibold text-slate-950">
-                {liveDuration.formatted}
-              </p>
-            </>
-          ) : (
-            <>
-              <p className="text-slate-500">
-                Paket {formatDuration(activeTransaction.packageDurationSnapshot)}
-              </p>
-              <p className="mt-1 text-lg font-semibold text-slate-950">
-                Berjalan {liveDuration.formatted}
-              </p>
-            </>
-          )}
+      <div className="mt-3">
+        <span className={`status-badge status-badge--${statusClass}`}>
+          {consoleUnit.status}
+        </span>
+      </div>
+
+      {isInUse ? (
+        <div className="mt-5 flex flex-1 flex-col">
+          <div className="flex items-center justify-between gap-3">
+            <span className={activeTransaction.pricingType === "PACKAGE" ? "mode-badge mode-badge--package" : "mode-badge mode-badge--open"}>
+              {activeTransaction.pricingType}
+            </span>
+            {activeTransaction.pricingType === "PACKAGE" ? (
+              <span className="text-sm text-[var(--color-muted)]">
+                {formatDuration(activeTransaction.packageDurationSnapshot)}
+              </span>
+            ) : null}
+          </div>
+
+          <p className="font-display-number console-timer console-timer--active mt-5 font-semibold text-[var(--color-text)]">
+            {formatClockDuration(estimate.elapsedSeconds)}
+          </p>
+          <p className="mt-4 truncate text-[1.02rem] text-[var(--color-text)]">
+            {activeTransaction.customerName || "Walk-in Customer"}
+          </p>
+          <p className="font-display-number mt-auto pt-4 text-sm text-[var(--color-muted)]">
+            Est. {formatRupiah(estimate.estimatedGrandTotal)}
+          </p>
         </div>
       ) : null}
 
-      <div className="mt-5 flex items-center justify-between gap-3">
-        <span
-          className={`inline-flex items-center rounded-full px-3 py-1 text-xs font-semibold ring-1 ${statusStyles.chip}`}
-        >
-          {consoleUnit.status}
-        </span>
+      {isAvailable ? (
+        <div className="mt-auto pt-6">
+          <p className="text-sm text-[var(--color-muted)]">Klik untuk mulai transaksi</p>
+        </div>
+      ) : null}
 
-        <button
-          type="button"
-          disabled={!canStart}
-          onClick={() => onSelectConsole(consoleUnit)}
-          className={`rounded-2xl px-4 py-2 text-sm font-semibold transition ${statusStyles.button} ${
-            !canStart ? "cursor-not-allowed opacity-70" : ""
-          }`}
-        >
-          {canStart ? "Mulai Transaksi" : "Tidak Tersedia"}
-        </button>
-      </div>
+      {isMaintenance ? (
+        <div className="mt-5 flex-1">
+          <div
+            className="rounded-[10px] border p-3 text-sm text-[var(--color-muted)]"
+            style={{
+              borderColor: theme.colors.border,
+              backgroundColor: theme.colors.surface,
+            }}
+          >
+            {consoleUnit.notes || "Console sedang maintenance."}
+          </div>
+        </div>
+      ) : null}
     </article>
   );
 }
