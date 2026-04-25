@@ -1,6 +1,6 @@
 const { Prisma } = require("@prisma/client");
 
-const prisma = require("../config/prisma");
+const prisma = require("../lib/prisma");
 
 function generateInvoiceNumber() {
   const timestamp = new Date().toISOString().replace(/\D/g, "").slice(0, 14);

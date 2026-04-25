@@ -1,4 +1,4 @@
-const prisma = require("../src/config/prisma");
+const prisma = require("../src/lib/prisma");
 const {
   startOpenTransaction,
   addTransactionItem,

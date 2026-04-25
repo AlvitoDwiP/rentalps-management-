@@ -1,4 +1,4 @@
-const prisma = require("../config/prisma");
+const prisma = require("../lib/prisma");
 
 async function listProducts(req, res, next) {
   try {

@@ -1,7 +1,7 @@
 require("dotenv").config();
 
 const bcrypt = require("bcrypt");
-const prisma = require("../src/config/prisma");
+const prisma = require("../src/lib/prisma");
 
 const ADMIN_PASSWORD = "admin123";
 const ADMIN_EMAIL = "admin@rentalps.local";

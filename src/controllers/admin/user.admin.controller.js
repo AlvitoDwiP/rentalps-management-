@@ -1,6 +1,6 @@
 const bcrypt = require("bcrypt");
 
-const prisma = require("../../config/prisma");
+const prisma = require("../../lib/prisma");
 
 function createError(message, status = 400) {
   const error = new Error(message);

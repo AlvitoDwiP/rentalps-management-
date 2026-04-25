@@ -1,7 +1,7 @@
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 
-const prisma = require("../config/prisma");
+const prisma = require("../../lib/prisma");
 
 function createError(message, status) {
   const error = new Error(message);

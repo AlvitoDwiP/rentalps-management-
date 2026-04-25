@@ -1,7 +1,7 @@
 const {
   getActiveUserById,
   verifyAccessToken,
-} = require("../services/auth.service");
+} = require("../services/auth/auth.service");
 
 async function authenticate(req, res, next) {
   try {

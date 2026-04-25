@@ -1,7 +1,7 @@
 require("dotenv").config();
 
 const app = require("./app");
-const prisma = require("./config/prisma");
+const prisma = require("./lib/prisma");
 
 const PORT = Number.parseInt(process.env.PORT, 10) || 3000;
 
