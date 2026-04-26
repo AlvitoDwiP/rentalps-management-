@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { NavLink, Outlet } from "react-router-dom";
 
+import playstationLogo from "../assets/playstation-logo.png";
 import useAuthStore from "../store/authStore.js";
 
 const primaryMenuItems = [
@@ -40,11 +41,11 @@ function AdminLayout() {
               <Menu className="h-5 w-5" />
             </button>
             <div className="admin-topbar__badge">
-              <LayoutGrid className="h-4 w-4" />
+              <img src={playstationLogo} alt="PlayStation" className="brand-playstation-logo" />
             </div>
             <div className="admin-topbar__brand-copy">
               <p className="admin-topbar__brand-title">RentalPS</p>
-              <p className="admin-topbar__brand-subtitle">Warm control panel</p>
+              <p className="admin-topbar__brand-subtitle">Admin Panel</p>
             </div>
           </div>
 

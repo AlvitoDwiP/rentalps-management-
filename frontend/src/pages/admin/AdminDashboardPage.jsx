@@ -329,7 +329,7 @@ function AdminDashboardPage() {
     <div className="admin-dashboard">
       <section className="admin-dashboard__hero">
         <div>
-          <p className="admin-dashboard__eyebrow">Warm Control Panel</p>
+          <p className="admin-dashboard__eyebrow">Dashboard Admin</p>
           <h1 className="admin-dashboard__title">Ringkasan performa bisnis rental hari ini</h1>
           <p className="admin-dashboard__description">
             Pantau revenue aktif, transaksi, pergerakan produk, dan stok kritis dari satu panel admin.

@@ -258,14 +258,14 @@ function AdminReportsPage() {
         />
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
-        <div className="admin-section">
-          <div className="flex items-center justify-between gap-3">
+      <section className="admin-reports-grid">
+        <div className="admin-section min-w-0">
+          <div className="admin-reports-card-header">
             <div>
               <p className="admin-eyebrow">Top Products</p>
               <h2 className="admin-title admin-title--section">Produk Terlaris</h2>
             </div>
-            <BarChart3 className="h-6 w-6 text-[#ddcdff]" />
+            <BarChart3 className="h-5 w-5 text-[#ddcdff]" />
           </div>
 
           {data.topProducts.length === 0 ? (
@@ -278,37 +278,35 @@ function AdminReportsPage() {
             />
           ) : (
             <div className="admin-table-wrap">
-              <div className="admin-table-scroll">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Produk</th>
-                      <th>Quantity</th>
-                      <th>Revenue</th>
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Produk</th>
+                    <th>Quantity</th>
+                    <th>Revenue</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.topProducts.map((item) => (
+                    <tr key={item.id} className="admin-table-row">
+                      <td className="font-medium text-[var(--admin-text)]">{item.name}</td>
+                      <td className="admin-number">{item.quantitySold}</td>
+                      <td className="admin-number">{formatRupiah(item.revenue)}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {data.topProducts.map((item) => (
-                      <tr key={item.id} className="admin-table-row">
-                        <td className="font-medium text-[var(--admin-text)]">{item.name}</td>
-                        <td className="admin-number">{item.quantitySold}</td>
-                        <td className="admin-number">{formatRupiah(item.revenue)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
 
-        <div className="admin-section">
-          <div className="flex items-center justify-between gap-3">
+        <div className="admin-section min-w-0">
+          <div className="admin-reports-card-header">
             <div>
               <p className="admin-eyebrow">Transactions</p>
               <h2 className="admin-title admin-title--section">Transaksi Selesai</h2>
             </div>
-            <ReceiptText className="h-6 w-6 text-[#ddcdff]" />
+            <ReceiptText className="h-5 w-5 text-[#ddcdff]" />
           </div>
 
           {data.transactions.length === 0 ? (
@@ -321,34 +319,32 @@ function AdminReportsPage() {
             />
           ) : (
             <div className="admin-table-wrap">
-              <div className="admin-table-scroll">
-                <table className="admin-table">
-                  <thead>
-                    <tr>
-                      <th>Waktu Selesai</th>
-                      <th>Console</th>
-                      <th>Tipe</th>
-                      <th>Rental</th>
-                      <th>Produk</th>
-                      <th>Grand Total</th>
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th>Waktu Selesai</th>
+                    <th>Console</th>
+                    <th>Tipe</th>
+                    <th>Rental</th>
+                    <th>Produk</th>
+                    <th>Grand Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.transactions.map((transaction) => (
+                    <tr key={transaction.id} className="admin-table-row">
+                      <td>{formatDateTime(transaction.endTime)}</td>
+                      <td className="font-medium text-[var(--admin-text)]">
+                        {transaction.consoleCode}
+                      </td>
+                      <td>{transaction.pricingType}</td>
+                      <td className="admin-number">{formatRupiah(transaction.rentalTotal)}</td>
+                      <td className="admin-number">{formatRupiah(transaction.productTotal)}</td>
+                      <td className="admin-number">{formatRupiah(transaction.grandTotal)}</td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {data.transactions.map((transaction) => (
-                      <tr key={transaction.id} className="admin-table-row">
-                        <td>{formatDateTime(transaction.endTime)}</td>
-                        <td className="font-medium text-[var(--admin-text)]">
-                          {transaction.consoleCode}
-                        </td>
-                        <td>{transaction.pricingType}</td>
-                        <td className="admin-number">{formatRupiah(transaction.rentalTotal)}</td>
-                        <td className="admin-number">{formatRupiah(transaction.productTotal)}</td>
-                        <td className="admin-number">{formatRupiah(transaction.grandTotal)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  ))}
+                </tbody>
+              </table>
             </div>
           )}
         </div>

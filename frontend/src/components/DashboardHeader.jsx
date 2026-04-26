@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
+import playstationLogo from "../assets/playstation-logo.png";
 import { theme } from "../lib/theme.js";
 import useAuthStore from "../store/authStore.js";
 
@@ -111,13 +112,17 @@ function DashboardHeader({
 
           <div className="flex shrink-0 items-center gap-4">
             <div
-              className="inline-flex h-11 w-11 items-center justify-center rounded-[12px] text-base font-extrabold tracking-[-0.04em]"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-[12px] border p-1.5"
               style={{
-                backgroundColor: theme.colors.inUse,
-                color: theme.colors.text,
+                backgroundColor: "#fff",
+                borderColor: theme.colors.border,
               }}
             >
-              PS
+              <img
+                src={playstationLogo}
+                alt="PlayStation"
+                className="h-full w-full object-contain"
+              />
             </div>
 
             <div>
