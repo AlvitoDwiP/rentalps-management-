@@ -48,12 +48,14 @@ model User {
   password     String
   role         Role
   isActive     Boolean       @default(true)
+  deletedAt    DateTime?
   transactions Transaction[]
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
   @@index([role])
   @@index([isActive])
+  @@index([deletedAt])
 }
 
 model PlayStationUnit {

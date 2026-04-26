@@ -153,47 +153,53 @@ function AdminPackagesPage() {
 
   return (
     <>
-      <div className="flex flex-col gap-5">
-        <div className="flex flex-col gap-4 rounded-[1.75rem] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.22),transparent_30%),rgba(15,23,42,0.92)] p-5 sm:flex-row sm:items-end sm:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-orange-300">
-              Admin Packages
-            </p>
-            <h2 className="mt-2 text-3xl font-semibold text-white">Kelola Package</h2>
-            <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-              Tambah, edit, dan nonaktifkan package rental berdasarkan tipe console.
-            </p>
-          </div>
+      <div className="admin-page">
+        <div className="admin-header-card">
+          <div className="admin-header-card__row">
+            <div>
+              <p className="admin-eyebrow">Kelola Paket</p>
+              <h1 className="admin-title">Paket</h1>
+              <p className="admin-description">
+                Atur paket rental berdasarkan tipe console, durasi, dan harga yang
+                dipakai kasir.
+              </p>
+            </div>
 
-          <button
-            type="button"
-            onClick={handleOpenCreate}
-            disabled={
-              createMutation.isPending ||
-              updateMutation.isPending ||
-              deleteMutation.isPending
-            }
-            className="inline-flex items-center justify-center gap-2 rounded-2xl bg-orange-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-orange-400 disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <Plus className="h-4 w-4" />
-            Tambah Package
-          </button>
+            <div className="admin-header-card__action">
+              <button
+                type="button"
+                onClick={handleOpenCreate}
+                disabled={
+                  createMutation.isPending ||
+                  updateMutation.isPending ||
+                  deleteMutation.isPending
+                }
+                className="admin-button admin-button--primary"
+              >
+                <Plus className="h-4 w-4" />
+                Tambah Paket
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div className="grid gap-4 rounded-[1.75rem] border border-white/10 bg-white/[0.04] p-4 lg:grid-cols-[1fr_auto] lg:items-end">
+        <div className="admin-filter-bar lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
           <label className="relative block">
-            <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+            <span className="mb-2 block text-sm font-medium text-[var(--admin-text)]">
+              Cari paket
+            </span>
+            <Search className="pointer-events-none absolute left-4 top-[calc(50%+0.8rem)] h-4 w-4 -translate-y-1/2 text-[var(--admin-text-muted)]" />
             <input
               type="text"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               placeholder="Cari package berdasarkan nama"
-              className="w-full rounded-2xl border border-white/10 bg-slate-950/60 py-3 pl-11 pr-4 text-sm text-white outline-none transition focus:border-orange-400 focus:ring-4 focus:ring-orange-500/10"
+              className="admin-input pl-11"
             />
           </label>
 
           <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">
+            <p className="mb-2 text-sm font-medium text-[var(--admin-text)]">
               Console Type
             </p>
             <div className="flex flex-wrap gap-2">
@@ -202,10 +208,10 @@ function AdminPackagesPage() {
                   key={item}
                   type="button"
                   onClick={() => setConsoleTypeFilter(item)}
-                  className={`rounded-2xl px-3 py-2 text-xs font-semibold transition ${
+                  className={`admin-button min-h-0 px-3 py-2 text-xs ${
                     consoleTypeFilter === item
-                      ? "bg-orange-500 text-white"
-                      : "border border-white/10 bg-white/[0.04] text-slate-300 hover:bg-white/[0.08]"
+                      ? "admin-button--primary"
+                      : "admin-button--secondary"
                   }`}
                 >
                   {item}
@@ -215,67 +221,64 @@ function AdminPackagesPage() {
           </div>
         </div>
 
-        <div className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/[0.04]">
+        <div className="admin-section">
           {packagesQuery.isLoading ? (
-            <div className="p-5">
+            <div className="admin-state-surface rounded-[1rem] p-5">
               <SectionSkeleton variant="list" count={4} />
             </div>
           ) : packagesQuery.isError ? (
-            <div className="p-5">
+            <div>
               <ErrorState
                 title="Package gagal dimuat"
                 description="Daftar package admin belum bisa diambil. Coba muat ulang halaman ini."
                 onRetry={() => packagesQuery.refetch()}
-                className="border-white/10 bg-rose-500/10"
+                className="admin-state-surface bg-[rgba(255,138,138,0.12)]"
+                titleClassName="text-[var(--admin-danger)]"
+                descriptionClassName="text-[var(--admin-text-muted)]"
+                retryClassName="bg-[var(--admin-purple)] hover:bg-[var(--admin-purple-hover)]"
               />
             </div>
           ) : filteredPackages.length === 0 ? (
-            <div className="p-5">
-              <EmptyState
-                title="Package tidak ditemukan"
-                description="Coba kata kunci lain, ubah filter console type, atau tambahkan package baru."
-                className="border-white/10 bg-slate-950/40"
-                titleClassName="text-white"
-                descriptionClassName="text-slate-400"
-              />
-            </div>
+            <EmptyState
+              title="Paket tidak ditemukan"
+              description="Coba kata kunci lain, ubah filter console type, atau tambahkan paket baru."
+              className="admin-state-surface"
+              titleClassName="text-[var(--admin-text)]"
+              descriptionClassName="text-[var(--admin-text-muted)]"
+            />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm">
-                <thead className="bg-white/[0.03] text-slate-400">
-                  <tr>
-                    <th className="px-5 py-4 font-medium">Name</th>
-                    <th className="px-5 py-4 font-medium">Console Type</th>
-                    <th className="px-5 py-4 font-medium">Duration</th>
-                    <th className="px-5 py-4 font-medium">Price</th>
-                    <th className="px-5 py-4 font-medium">Status</th>
-                    <th className="px-5 py-4 font-medium text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <div className="admin-table-wrap">
+              <div className="admin-table-scroll">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Console Type</th>
+                      <th>Duration</th>
+                      <th>Price</th>
+                      <th>Status</th>
+                      <th className="text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
                   {filteredPackages.map((item) => (
-                    <tr
-                      key={item.id}
-                      className="border-t border-white/10 text-slate-200"
-                    >
-                      <td className="px-5 py-4 font-semibold text-white">{item.name}</td>
-                      <td className="px-5 py-4">{item.consoleType}</td>
-                      <td className="px-5 py-4">
+                    <tr key={item.id} className="admin-table-row">
+                      <td className="font-semibold text-[var(--admin-text)]">{item.name}</td>
+                      <td>{item.consoleType}</td>
+                      <td>
                         {formatDuration(item.durationMinutes)}
                       </td>
-                      <td className="px-5 py-4">{formatRupiah(item.price)}</td>
-                      <td className="px-5 py-4">
+                      <td className="admin-number">{formatRupiah(item.price)}</td>
+                      <td>
                         <span
-                          className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                            item.isActive
-                              ? "bg-emerald-500/15 text-emerald-200"
-                              : "bg-slate-500/15 text-slate-300"
+                          className={`admin-badge ${
+                            item.isActive ? "admin-badge--success" : "admin-badge--muted"
                           }`}
                         >
                           {item.isActive ? "Aktif" : "Nonaktif"}
                         </span>
                       </td>
-                      <td className="px-5 py-4">
+                      <td>
                         <div className="flex justify-end gap-2">
                           <button
                             type="button"
@@ -285,7 +288,7 @@ function AdminPackagesPage() {
                               updateMutation.isPending ||
                               deleteMutation.isPending
                             }
-                            className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-100 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
+                            className="admin-button admin-button--secondary min-h-0 px-3 py-2 text-xs"
                           >
                             <PencilLine className="h-4 w-4" />
                             Edit
@@ -298,7 +301,7 @@ function AdminPackagesPage() {
                               updateMutation.isPending ||
                               deleteMutation.isPending
                             }
-                            className="inline-flex items-center gap-2 rounded-2xl bg-rose-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-rose-500 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="admin-button admin-button--danger min-h-0 px-3 py-2 text-xs"
                           >
                             <Trash2 className="h-4 w-4" />
                             Delete
@@ -307,8 +310,9 @@ function AdminPackagesPage() {
                       </td>
                     </tr>
                   ))}
-                </tbody>
-              </table>
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>

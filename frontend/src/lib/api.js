@@ -79,6 +79,16 @@ export async function getAdminDashboard() {
   return response.data.data;
 }
 
+export async function getAdminReportsSummary({ startDate, endDate } = {}) {
+  const response = await api.get("/admin/reports/summary", {
+    params: {
+      ...(startDate ? { startDate } : {}),
+      ...(endDate ? { endDate } : {}),
+    },
+  });
+  return response.data.data;
+}
+
 export async function getTransactionHistory(params = {}) {
   const response = await api.get("/transactions/history", {
     params,
@@ -175,6 +185,23 @@ export async function updateAdminConsoleMaintenanceRequest({ id, status }) {
 
 export async function createAdminUserRequest(payload) {
   const response = await api.post("/admin/users", payload);
+  return response.data.data;
+}
+
+export async function getAdminUsers() {
+  const response = await api.get("/admin/users");
+  return response.data.data;
+}
+
+export async function updateAdminUserStatusRequest({ userId, isActive }) {
+  const response = await api.patch(`/admin/users/${userId}/status`, {
+    isActive,
+  });
+  return response.data.data;
+}
+
+export async function deleteAdminUserRequest(userId) {
+  const response = await api.delete(`/admin/users/${userId}`);
   return response.data.data;
 }
 

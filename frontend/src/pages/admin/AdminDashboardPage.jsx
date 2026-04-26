@@ -2,11 +2,11 @@ import {
   AlertTriangle,
   ArrowRight,
   BarChart3,
+  CircleDollarSign,
   ClipboardList,
   PackagePlus,
   ShoppingBasket,
   UserPlus,
-  Wallet,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
@@ -15,24 +15,9 @@ import EmptyState from "../../components/EmptyState.jsx";
 import ErrorState from "../../components/ErrorState.jsx";
 import SectionSkeleton from "../../components/SectionSkeleton.jsx";
 import { getAdminDashboard } from "../../lib/api.js";
-import { formatRupiah } from "../../lib/format.js";
+import { formatCompactRupiah, formatRupiah } from "../../lib/format.js";
 
-function formatCompactCurrency(value) {
-  const amount = Number(value || 0);
-  const formatValue = (input) => input.toFixed(1).replace(".0", "").replace(".", ",");
-
-  if (amount >= 1000000) {
-    return `Rp${formatValue(amount / 1000000)} jt`;
-  }
-
-  if (amount >= 1000) {
-    return `Rp${formatValue(amount / 1000)}k`;
-  }
-
-  return `Rp${amount}`;
-}
-
-function formatChartRevenue(value) {
+function formatCompactNumber(value) {
   const amount = Number(value || 0);
   const formatValue = (input) => input.toFixed(1).replace(".0", "").replace(".", ",");
 
@@ -47,114 +32,88 @@ function formatChartRevenue(value) {
   return `${amount}`;
 }
 
-function SummaryCard({ title, value, accent = "purple", helper, icon: Icon }) {
-  const accentClass =
-    accent === "danger"
-      ? "text-rose-300"
-      : "text-violet-300";
-  const borderClass =
-    accent === "danger"
-      ? "border-rose-500/20"
-      : "border-violet-500/20";
-  const glowClass =
-    accent === "danger"
-      ? "shadow-[0_22px_50px_-34px_rgba(225,29,72,0.48)]"
-      : "shadow-[0_22px_50px_-34px_rgba(139,92,246,0.55)]";
+function SummaryCard({ title, value, helper, tone = "default" }) {
+  const helperClass = tone === "danger" ? "text-[var(--admin-danger)]" : "text-[var(--admin-success)]";
+  const valueClass = tone === "danger" ? "text-[var(--admin-danger)]" : "text-[var(--admin-text)]";
 
   return (
-    <article
-      className={`rounded-[1.9rem] border bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(15,23,42,0.82))] p-5 ${borderClass} ${glowClass}`}
-    >
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-sm font-medium text-slate-400">{title}</p>
-          <p className={`font-display-number mt-5 text-[2.9rem] font-semibold leading-none ${accentClass}`}>
-            {value}
-          </p>
-          <p className="mt-4 text-xs uppercase tracking-[0.16em] text-slate-500">{helper}</p>
-        </div>
-        {Icon ? (
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-white/8 bg-white/[0.04] text-violet-200">
-            <Icon className="h-5 w-5" />
-          </div>
-        ) : null}
-      </div>
+    <article className="admin-kpi-card">
+      <p className="admin-kpi-card__label">{title}</p>
+      <p className={`admin-kpi-card__value ${valueClass}`}>{value}</p>
+      <p className={`admin-kpi-card__helper ${helperClass}`}>{helper}</p>
     </article>
   );
 }
 
-function MiniStat({ label, value, tone = "violet" }) {
-  const toneClass = {
-    emerald: "bg-emerald-500/14 text-emerald-200 border-emerald-500/20",
-    blue: "bg-sky-500/14 text-sky-200 border-sky-500/20",
-    amber: "bg-amber-500/14 text-amber-200 border-amber-500/20",
-  }[tone];
-
+function QuickActionCard({ icon: Icon, title, description, toneClassName, onClick }) {
   return (
-    <div className={`rounded-2xl border px-4 py-3 ${toneClass}`}>
-      <p className="text-xs uppercase tracking-[0.16em] opacity-75">{label}</p>
-      <p className="font-display-number mt-2 text-2xl font-semibold">{value}</p>
-    </div>
-  );
-}
-
-function QuickActionCard({ icon: Icon, title, description, onClick }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className="group cursor-pointer rounded-[1.65rem] border border-violet-500/16 bg-[linear-gradient(180deg,rgba(124,58,237,0.14),rgba(15,23,42,0.82))] p-5 text-left transition hover:-translate-y-1 hover:border-violet-400/30 hover:bg-[linear-gradient(180deg,rgba(139,92,246,0.22),rgba(15,23,42,0.88))] hover:shadow-[0_18px_46px_-30px_rgba(139,92,246,0.8)]"
-      title={title}
-    >
-      <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-violet-400/20 bg-violet-500/16 text-violet-200 transition group-hover:bg-violet-500/22">
+    <button type="button" onClick={onClick} className="admin-quick-card">
+      <div className={`admin-quick-card__icon ${toneClassName}`}>
         <Icon className="h-5 w-5" />
       </div>
-      <p className="mt-4 text-lg font-semibold text-white">{title}</p>
-      <p className="mt-2 text-sm leading-6 text-slate-300">{description}</p>
-      <div className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-violet-200">
-        Buka Halaman
-        <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" />
+      <div className="admin-quick-card__copy">
+        <p className="admin-quick-card__title">{title}</p>
+        <p className="admin-quick-card__description">{description}</p>
       </div>
     </button>
   );
 }
 
 function RevenueChart({ items }) {
+  if (!items.length) {
+    return (
+      <div className="admin-section-card">
+        <div className="admin-section-card__header">
+          <div>
+            <p className="admin-section-card__eyebrow">Pendapatan 7 Hari Terakhir</p>
+            <h3 className="admin-section-card__title">Tren Pendapatan</h3>
+          </div>
+          <button type="button" className="admin-section-link">
+            Laporan lengkap <ArrowRight className="h-4 w-4" />
+          </button>
+        </div>
+        <EmptyState
+          title="Belum ada data pendapatan"
+          description="Grafik akan muncul setelah ada transaksi completed."
+          className="border-[var(--admin-border)] bg-[var(--admin-card-soft)]"
+          titleClassName="text-[var(--admin-text)]"
+          descriptionClassName="text-[var(--admin-text-muted)]"
+        />
+      </div>
+    );
+  }
+
   const maxRevenue = Math.max(...items.map((item) => Number(item.revenue || 0)), 1);
+  const latestDate = items[items.length - 1]?.date;
 
   return (
-    <div className="rounded-[1.85rem] border border-violet-500/16 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(15,23,42,0.88))] p-6">
-      <div className="flex items-center justify-between gap-3">
+    <div className="admin-section-card">
+      <div className="admin-section-card__header">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-300">
-            Chart Pendapatan
-          </p>
-          <h3 className="mt-2 text-2xl font-semibold text-white">7 Hari Terakhir</h3>
+          <p className="admin-section-card__eyebrow">Pendapatan 7 Hari Terakhir</p>
+          <h3 className="admin-section-card__title">Tren Pendapatan</h3>
         </div>
-        <BarChart3 className="h-6 w-6 text-violet-300" />
+        <button type="button" className="admin-section-link">
+          Laporan lengkap <ArrowRight className="h-4 w-4" />
+        </button>
       </div>
 
-      <div className="mt-8 grid grid-cols-7 items-end gap-3">
+      <div className="admin-chart">
         {items.map((item) => {
           const revenue = Number(item.revenue || 0);
-          const heightPercent = Math.max((revenue / maxRevenue) * 100, revenue > 0 ? 12 : 6);
+          const heightPercent = Math.max((revenue / maxRevenue) * 100, revenue > 0 ? 16 : 9);
+          const isHighlighted = item.date === latestDate || revenue === maxRevenue;
 
           return (
-            <div key={item.date} className="flex min-h-[220px] flex-col justify-end">
-              <p className="mb-3 text-[11px] font-medium text-slate-400">
-                {formatChartRevenue(revenue)}
-              </p>
-              <div className="flex h-[172px] items-end">
-                <div className="w-full rounded-t-[1rem] bg-violet-500/10 ring-1 ring-inset ring-violet-400/10">
-                  <div
-                    className="w-full rounded-t-[1rem] bg-[linear-gradient(180deg,#d8b4fe_0%,#8b5cf6_42%,#6d28d9_100%)] shadow-[0_18px_42px_-26px_rgba(139,92,246,0.7)]"
-                    style={{ height: `${heightPercent}%`, minHeight: revenue > 0 ? "18px" : "10px" }}
-                  />
-                </div>
+            <div key={item.date} className="admin-chart__item">
+              <p className="admin-chart__value">{formatCompactNumber(revenue)}</p>
+              <div className="admin-chart__bar-shell">
+                <div
+                  className={`admin-chart__bar ${isHighlighted ? "admin-chart__bar--active" : ""}`}
+                  style={{ height: `${heightPercent}%` }}
+                />
               </div>
-              <p className="mt-4 text-center text-sm font-semibold text-slate-300">
-                {item.label}
-              </p>
+              <p className="admin-chart__label">{item.label}</p>
             </div>
           );
         })}
@@ -163,22 +122,23 @@ function RevenueChart({ items }) {
   );
 }
 
-function TopProductsCard({ items }) {
+function TopProductsCard({ items, onViewAll }) {
   if (!items.length) {
     return (
-      <div className="rounded-[1.75rem] border border-violet-500/16 bg-white/[0.04] p-5">
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-300">
-          Top Produk
-        </p>
-        <div className="mt-5">
-          <EmptyState
-            title="Belum ada produk terjual"
-            description="Top produk akan muncul setelah transaksi completed memiliki item."
-            className="border-white/10 bg-slate-950/40"
-            titleClassName="text-white"
-            descriptionClassName="text-slate-400"
-          />
+      <div className="admin-section-card admin-section-card--tight">
+        <div className="admin-section-card__header">
+          <div>
+            <p className="admin-section-card__eyebrow">Top Produk Terjual</p>
+            <h3 className="admin-section-card__title">Produk Paling Laku</h3>
+          </div>
         </div>
+        <EmptyState
+          title="Belum ada produk terjual"
+          description="Top produk akan muncul setelah transaksi completed memiliki item."
+          className="border-[var(--admin-border)] bg-[var(--admin-card-soft)]"
+          titleClassName="text-[var(--admin-text)]"
+          descriptionClassName="text-[var(--admin-text-muted)]"
+        />
       </div>
     );
   }
@@ -186,35 +146,28 @@ function TopProductsCard({ items }) {
   const maxQuantity = Math.max(...items.map((item) => Number(item.quantitySold || 0)), 1);
 
   return (
-    <div className="rounded-[1.75rem] border border-violet-500/16 bg-white/[0.04] p-5">
-      <div className="flex items-center justify-between gap-3">
+    <div className="admin-section-card admin-section-card--tight">
+      <div className="admin-section-card__header">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-300">
-            Top Produk
-          </p>
-          <h3 className="mt-2 text-2xl font-semibold text-white">Produk Terlaris</h3>
+          <p className="admin-section-card__eyebrow">Top Produk Terjual</p>
+          <h3 className="admin-section-card__title">Produk Paling Laku</h3>
         </div>
-        <ShoppingBasket className="h-6 w-6 text-violet-300" />
+        <button type="button" onClick={onViewAll} className="admin-section-link">
+          Lihat semua <ArrowRight className="h-4 w-4" />
+        </button>
       </div>
 
-      <div className="mt-6 space-y-4">
+      <div className="admin-top-products">
         {items.map((item) => (
-          <div key={item.id} className="rounded-2xl border border-white/8 bg-slate-950/34 p-4">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="truncate font-semibold text-white">{item.name}</p>
-                <p className="mt-1 text-sm text-slate-400">
-                  {formatCompactNumber(item.quantitySold)} terjual
-                </p>
-              </div>
-              <p className="font-display-number text-sm text-violet-200">
-                {formatCompactCurrency(item.revenue)}
-              </p>
+          <div key={item.id} className="admin-top-products__item">
+            <div className="admin-top-products__meta">
+              <p className="admin-top-products__name">{item.name}</p>
+              <p className="admin-top-products__count">{formatCompactNumber(item.quantitySold)}</p>
             </div>
-            <div className="mt-4 h-2.5 rounded-full bg-white/8">
+            <div className="admin-top-products__track">
               <div
-                className="h-2.5 rounded-full bg-[linear-gradient(90deg,#7c3aed_0%,#c084fc_100%)]"
-                style={{ width: `${Math.max((item.quantitySold / maxQuantity) * 100, 10)}%` }}
+                className="admin-top-products__fill"
+                style={{ width: `${Math.max((Number(item.quantitySold || 0) / maxQuantity) * 100, 12)}%` }}
               />
             </div>
           </div>
@@ -224,102 +177,101 @@ function TopProductsCard({ items }) {
   );
 }
 
-function RecentTransactionsCard({ items }) {
+function RecentTransactionsCard({ items, onViewAll }) {
   const statusClasses = {
-    ACTIVE: "bg-sky-500/14 text-sky-200 border-sky-500/20",
-    COMPLETED: "bg-emerald-500/14 text-emerald-200 border-emerald-500/20",
+    ACTIVE: "admin-status-badge admin-status-badge--active",
+    COMPLETED: "admin-status-badge admin-status-badge--completed",
   };
 
   return (
-    <div className="rounded-[1.75rem] border border-violet-500/16 bg-white/[0.04] p-5">
-      <div className="flex items-center justify-between gap-3">
+    <div className="admin-section-card">
+      <div className="admin-section-card__header">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-300">
-            Transaksi Terkini
-          </p>
-          <h3 className="mt-2 text-2xl font-semibold text-white">Aktivitas Terbaru</h3>
+          <p className="admin-section-card__eyebrow">Transaksi Terkini</p>
+          <h3 className="admin-section-card__title">Aktivitas Terbaru</h3>
         </div>
-        <ClipboardList className="h-6 w-6 text-violet-300" />
+        <button type="button" onClick={onViewAll} className="admin-section-link">
+          Lihat semua <ArrowRight className="h-4 w-4" />
+        </button>
       </div>
 
       {items.length === 0 ? (
-        <div className="mt-5">
-          <EmptyState
-            title="Belum ada transaksi"
-            description="Daftar transaksi terkini akan muncul setelah ada aktivitas."
-            className="border-white/10 bg-slate-950/40"
-            titleClassName="text-white"
-            descriptionClassName="text-slate-400"
-          />
-        </div>
+        <EmptyState
+          title="Belum ada transaksi"
+          description="Daftar transaksi terkini akan muncul setelah ada aktivitas."
+          className="border-[var(--admin-border)] bg-[var(--admin-card-soft)]"
+          titleClassName="text-[var(--admin-text)]"
+          descriptionClassName="text-[var(--admin-text-muted)]"
+        />
       ) : (
-        <div className="mt-5 overflow-hidden rounded-[1.35rem] border border-white/8 bg-slate-950/30">
-          <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-sm">
-            <thead className="border-b border-white/8 bg-white/[0.03] text-slate-400">
+        <div className="admin-table-shell">
+          <table className="admin-table">
+            <thead>
               <tr>
-                <th className="px-4 py-3 font-medium">Kode</th>
-                <th className="px-4 py-3 font-medium">Console</th>
-                <th className="px-4 py-3 font-medium">Mode</th>
-                <th className="px-4 py-3 font-medium">Total</th>
-                <th className="px-4 py-3 font-medium">Status</th>
+                <th>#</th>
+                <th>Console</th>
+                <th>Tipe</th>
+                <th>Total</th>
+                <th>Status</th>
               </tr>
             </thead>
             <tbody>
               {items.map((item) => (
-                <tr key={item.id} className="border-b border-white/6 text-slate-200 last:border-b-0">
-                  <td className="px-4 py-4 font-display-number text-violet-200">{item.shortCode}</td>
-                  <td className="px-4 py-4">{item.consoleCode}</td>
-                  <td className="px-4 py-4">{item.pricingType}</td>
-                  <td className="px-4 py-4">{formatRupiah(item.grandTotal)}</td>
-                  <td className="px-4 py-4">
-                    <span
-                      className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${
-                        statusClasses[item.status] || "bg-slate-500/14 text-slate-200 border-white/10"
-                      }`}
-                    >
-                      {item.status}
+                <tr key={item.id}>
+                  <td className="font-display-number text-[var(--admin-text)]">{item.shortCode}</td>
+                  <td>{item.consoleCode}</td>
+                  <td>{item.pricingType === "PACKAGE" ? "Paket" : "Open"}</td>
+                  <td className="font-display-number">{formatCompactRupiah(item.grandTotal)}</td>
+                  <td>
+                    <span className={statusClasses[item.status] || "admin-status-badge"}>
+                      {item.status === "COMPLETED" ? "SELESAI" : "AKTIF"}
                     </span>
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
-          </div>
         </div>
       )}
     </div>
   );
 }
 
-function CriticalProductsCard({ items }) {
+function CriticalProductsCard({ items, onManage }) {
   return (
-    <div className="rounded-[1.75rem] border border-rose-500/16 bg-white/[0.04] p-5">
-      <div className="flex items-center justify-between gap-3">
+    <div className="admin-section-card admin-section-card--tight">
+      <div className="admin-section-card__header">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-rose-300">
-            Stok Kritis
-          </p>
-          <h3 className="mt-2 text-2xl font-semibold text-white">Perlu Restock</h3>
+          <p className="admin-section-card__eyebrow">Stok Kritis</p>
+          <h3 className="admin-section-card__title">Perlu Restock</h3>
         </div>
-        <AlertTriangle className="h-6 w-6 text-rose-300" />
+        <button type="button" onClick={onManage} className="admin-section-link">
+          Kelola <ArrowRight className="h-4 w-4" />
+        </button>
       </div>
 
       {items.length === 0 ? (
-        <p className="mt-5 rounded-2xl border border-emerald-500/16 bg-emerald-500/8 px-4 py-4 text-sm text-emerald-200">
-          Aman. Tidak ada produk aktif dengan stok kritis saat ini.
-        </p>
+        <EmptyState
+          title="Tidak ada stok kritis"
+          description="Semua produk aktif masih dalam kondisi aman."
+          className="border-[var(--admin-border)] bg-[var(--admin-card-soft)]"
+          titleClassName="text-[var(--admin-text)]"
+          descriptionClassName="text-[var(--admin-text-muted)]"
+        />
       ) : (
-        <div className="mt-5 space-y-3">
+        <div className="admin-critical-list">
           {items.map((item) => (
-            <div
-              key={item.id}
-              className="flex items-center justify-between gap-3 rounded-2xl border border-rose-500/14 bg-rose-500/8 px-4 py-4"
-            >
-              <p className="font-medium text-white">{item.name}</p>
-              <span className="font-display-number text-lg font-semibold text-rose-300">
-                {item.stock}
-              </span>
+            <div key={item.id} className="admin-critical-list__item">
+              <div className="admin-critical-list__meta">
+                <p className="admin-critical-list__name">{item.name}</p>
+                <div className="admin-critical-list__track">
+                  <div
+                    className="admin-critical-list__fill"
+                    style={{ width: `${Math.max((Math.min(Number(item.stock || 0), 5) / 5) * 100, 12)}%` }}
+                  />
+                </div>
+              </div>
+              <p className="admin-critical-list__count">{item.stock} sisa</p>
             </div>
           ))}
         </div>
@@ -355,7 +307,7 @@ function AdminDashboardPage() {
 
   if (dashboardQuery.isLoading) {
     return (
-      <div className="space-y-5">
+      <div className="space-y-6">
         <SectionSkeleton variant="grid" count={4} />
         <SectionSkeleton variant="list" count={3} />
       </div>
@@ -368,137 +320,111 @@ function AdminDashboardPage() {
         title="Dashboard admin gagal dimuat"
         description="Data kontrol admin belum bisa diambil sekarang. Coba muat ulang dashboard ini."
         onRetry={() => dashboardQuery.refetch()}
-        className="border-white/10 bg-rose-500/10"
+        className="border-[var(--admin-border)] bg-[#3b1b1d]"
       />
     );
   }
 
   return (
-    <div className="space-y-5">
-      <section className="rounded-[1.95rem] border border-violet-500/18 bg-[radial-gradient(circle_at_top_left,rgba(139,92,246,0.28),transparent_28%),linear-gradient(180deg,rgba(30,27,75,0.82),rgba(15,23,42,0.96))] p-6 xl:p-7">
-        <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-300">
-              Admin Dashboard
-            </p>
-            <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em] text-white xl:text-[3.35rem]">
-              Rental PS Control Panel
-            </h1>
-            <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-300">
-              Pantau pendapatan, transaksi, performa produk, kesehatan stok, dan status
-              console dari satu dashboard admin.
-            </p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <div className="rounded-full border border-violet-400/16 bg-violet-500/10 px-4 py-2 text-sm text-violet-200">
-                Revenue Aktif {formatRupiah(data.summary.activeRevenueEstimate)}
-              </div>
-              <div className="rounded-full border border-white/10 bg-white/[0.04] px-4 py-2 text-sm text-slate-300">
-                {data.recentTransactions.length} transaksi terbaru dimuat
-              </div>
-            </div>
+    <div className="admin-dashboard">
+      <section className="admin-dashboard__hero">
+        <div>
+          <p className="admin-dashboard__eyebrow">Warm Control Panel</p>
+          <h1 className="admin-dashboard__title">Ringkasan performa bisnis rental hari ini</h1>
+          <p className="admin-dashboard__description">
+            Pantau revenue aktif, transaksi, pergerakan produk, dan stok kritis dari satu panel admin.
+          </p>
+        </div>
+        <div className="admin-dashboard__hero-stats">
+          <div className="admin-dashboard__hero-pill">
+            <CircleDollarSign className="h-4 w-4" />
+            <span>Revenue aktif {formatCompactRupiah(data.summary.activeRevenueEstimate)}</span>
           </div>
-
-          <div className="grid gap-3 sm:grid-cols-3">
-            <MiniStat
-              label="Available"
-              value={data.summary.availableConsoleCount}
-              tone="emerald"
-            />
-            <MiniStat label="In Use" value={data.summary.inUseConsoleCount} tone="blue" />
-            <MiniStat
-              label="Maintenance"
-              value={data.summary.maintenanceConsoleCount}
-              tone="amber"
-            />
+          <div className="admin-dashboard__hero-pill">
+            <ClipboardList className="h-4 w-4" />
+            <span>{data.recentTransactions.length} transaksi terbaru dimuat</span>
           </div>
         </div>
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-4">
+      <section className="admin-dashboard__kpi-grid">
         <SummaryCard
-          title="Pendapatan Hari Ini"
+          title="Pendapatan hari ini"
           value={formatRupiah(data.summary.todayRevenue)}
-          helper="Akumulasi transaksi selesai hari ini"
-          icon={Wallet}
+          helper="Berdasarkan transaksi selesai hari ini"
         />
         <SummaryCard
-          title="Transaksi Bulan Ini"
+          title="Transaksi bulan ini"
           value={String(data.summary.monthlyTransactionCount)}
-          helper="Jumlah transaksi completed bulan berjalan"
-          icon={ClipboardList}
+          helper="Total transaksi selesai bulan berjalan"
         />
         <SummaryCard
-          title="Pendapatan Bulan Ini"
-          value={formatRupiah(data.summary.monthlyRevenue)}
-          helper="Akumulasi grand total bulan berjalan"
-          icon={BarChart3}
+          title="Pendapatan bulan ini"
+          value={formatCompactRupiah(data.summary.monthlyRevenue)}
+          helper="Akumulasi pendapatan bulan berjalan"
         />
         <SummaryCard
-          title="Stok Produk Kritis"
+          title="Stok produk kritis"
           value={String(data.summary.criticalStockCount)}
-          helper="Produk aktif dengan stok 5 atau kurang"
-          accent={data.summary.criticalStockCount > 0 ? "danger" : "purple"}
-          icon={AlertTriangle}
+          helper={
+            data.summary.criticalStockCount > 0
+              ? "Perlu restock segera"
+              : "Stok produk aman"
+          }
+          tone={data.summary.criticalStockCount > 0 ? "danger" : "default"}
         />
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
+      <section className="admin-dashboard__quick-grid">
         <QuickActionCard
           icon={PackagePlus}
-          title="Tambah Produk"
-          description="Buka halaman master produk untuk menambah item baru."
+          title="Tambah produk"
+          description="Stok dan harga baru"
+          toneClassName="admin-quick-card__icon--purple"
           onClick={() => navigate("/admin/products")}
         />
         <QuickActionCard
           icon={ShoppingBasket}
-          title="Tambah Paket"
-          description="Kelola dan tambahkan package rental per tipe console."
+          title="Tambah paket"
+          description="Paket rental baru"
+          toneClassName="admin-quick-card__icon--blue"
           onClick={() => navigate("/admin/packages")}
         />
         <QuickActionCard
-          icon={Wallet}
-          title="Update Harga"
-          description="Perbarui rental rate aktif untuk semua tipe console."
+          icon={BarChart3}
+          title="Update harga"
+          description="Rate per jam"
+          toneClassName="admin-quick-card__icon--green"
           onClick={() => navigate("/admin/rates")}
         />
         <QuickActionCard
           icon={UserPlus}
-          title="Buat Akun Kasir"
-          description="Masuk ke modul user admin untuk menyiapkan manajemen akun kasir."
+          title="Buat akun kasir"
+          description="User baru"
+          toneClassName="admin-quick-card__icon--yellow"
           onClick={() => navigate("/admin/users")}
         />
       </section>
 
-      <section className="grid gap-5 xl:grid-cols-[1.3fr_0.9fr]">
-        <RevenueChart items={data.revenueLast7Days} />
-        <div className="space-y-5">
-          <div className="rounded-[1.75rem] border border-violet-500/16 bg-white/[0.04] p-5">
-            <div className="flex items-center justify-between gap-3">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-300">
-                  Estimasi Aktif
-                </p>
-                <h3 className="mt-2 text-2xl font-semibold text-white">
-                  Revenue Berjalan
-                </h3>
-              </div>
-              <Wallet className="h-6 w-6 text-violet-300" />
-            </div>
-            <p className="font-display-number mt-6 text-[2.4rem] font-semibold text-violet-200">
-              {formatRupiah(data.summary.activeRevenueEstimate)}
-            </p>
-            <p className="mt-3 text-sm leading-6 text-slate-400">
-              Estimasi gabungan transaksi aktif OPEN dan PACKAGE termasuk product total.
-            </p>
-          </div>
-
-          <TopProductsCard items={data.topProducts} />
+      <section className="admin-dashboard__content-grid">
+        <div className="admin-dashboard__column">
+          <RevenueChart items={data.revenueLast7Days} />
+          <RecentTransactionsCard
+            items={data.recentTransactions}
+            onViewAll={() => navigate("/admin/reports")}
+          />
         </div>
-      </section>
 
-      <section className="grid gap-5 xl:grid-cols-[1.2fr_0.8fr]">
-        <RecentTransactionsCard items={data.recentTransactions} />
-        <CriticalProductsCard items={data.criticalProducts} />
+        <div className="admin-dashboard__column">
+          <TopProductsCard
+            items={data.topProducts}
+            onViewAll={() => navigate("/admin/reports")}
+          />
+          <CriticalProductsCard
+            items={data.criticalProducts}
+            onManage={() => navigate("/admin/products")}
+          />
+        </div>
       </section>
 
       {!data.revenueLast7Days.length &&
@@ -508,9 +434,9 @@ function AdminDashboardPage() {
         <EmptyState
           title="Dashboard admin masih kosong"
           description="Belum ada data transaksi atau produk yang cukup untuk ditampilkan."
-          className="border-white/10 bg-slate-950/40"
-          titleClassName="text-white"
-          descriptionClassName="text-slate-400"
+          className="border-[var(--admin-border)] bg-[var(--admin-card-soft)]"
+          titleClassName="text-[var(--admin-text)]"
+          descriptionClassName="text-[var(--admin-text-muted)]"
         />
       ) : null}
     </div>

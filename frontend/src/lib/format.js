@@ -6,6 +6,21 @@ export function formatRupiah(value) {
   }).format(Number(value || 0));
 }
 
+export function formatCompactRupiah(value) {
+  const amount = Number(value || 0);
+  const formatValue = (input) => input.toFixed(1).replace(".0", "").replace(".", ",");
+
+  if (amount >= 1000000) {
+    return `Rp ${formatValue(amount / 1000000)} jt`;
+  }
+
+  if (amount >= 1000) {
+    return `Rp ${formatValue(amount / 1000)}k`;
+  }
+
+  return `Rp ${amount}`;
+}
+
 export function formatDuration(totalMinutes) {
   const minutes = Math.max(0, Number(totalMinutes || 0));
   const hours = Math.floor(minutes / 60);

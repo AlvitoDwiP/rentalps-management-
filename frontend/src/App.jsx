@@ -7,6 +7,7 @@ import AdminConsolesPage from "./pages/admin/AdminConsolesPage.jsx";
 import AdminDashboardPage from "./pages/admin/AdminDashboardPage.jsx";
 import AdminPackagesPage from "./pages/admin/AdminPackagesPage.jsx";
 import AdminProductsPage from "./pages/admin/AdminProductsPage.jsx";
+import AdminReportsPage from "./pages/admin/AdminReportsPage.jsx";
 import AdminRatesPage from "./pages/admin/AdminRatesPage.jsx";
 import AdminUsersPage from "./pages/admin/AdminUsersPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
@@ -65,6 +66,7 @@ function App() {
         <Route path="products" element={<AdminProductsPage />} />
         <Route path="packages" element={<AdminPackagesPage />} />
         <Route path="rates" element={<AdminRatesPage />} />
+        <Route path="reports" element={<AdminReportsPage />} />
         <Route path="consoles" element={<AdminConsolesPage />} />
         <Route path="users" element={<AdminUsersPage />} />
         <Route path="*" element={<Navigate to="/admin" replace />} />

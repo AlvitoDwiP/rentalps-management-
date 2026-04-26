@@ -60,90 +60,86 @@ function AdminRatesPage() {
 
   return (
     <>
-      <div className="flex flex-col gap-5">
-        <div className="rounded-[1.75rem] border border-white/10 bg-[radial-gradient(circle_at_top_left,rgba(249,115,22,0.22),transparent_30%),rgba(15,23,42,0.92)] p-5">
-          <p className="text-xs font-semibold uppercase tracking-[0.24em] text-orange-300">
-            Admin Rates
-          </p>
-          <h2 className="mt-2 text-3xl font-semibold text-white">Kelola Rental Rates</h2>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300">
-            Perbarui harga rental per jam untuk setiap tipe console dari satu panel.
+      <div className="admin-page">
+        <div className="admin-header-card">
+          <p className="admin-eyebrow">Harga Rental</p>
+          <h1 className="admin-title">Harga</h1>
+          <p className="admin-description">
+            Update tarif rental OPEN per tipe console tanpa mengubah histori
+            transaksi lama.
           </p>
         </div>
 
-        <div className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-white/[0.04]">
+        <div className="admin-section">
           {ratesQuery.isLoading ? (
-            <div className="p-5">
+            <div className="admin-state-surface rounded-[1rem] p-5">
               <SectionSkeleton variant="list" count={3} />
             </div>
           ) : ratesQuery.isError ? (
-            <div className="p-5">
+            <div>
               <ErrorState
                 title="Rental rates gagal dimuat"
                 description="Frontend admin sudah siap, tetapi daftar rates belum bisa diambil. Pastikan endpoint GET rates tersedia di backend, lalu coba lagi."
                 onRetry={() => ratesQuery.refetch()}
-                className="border-white/10 bg-rose-500/10"
+                className="admin-state-surface bg-[rgba(255,138,138,0.12)]"
+                titleClassName="text-[var(--admin-danger)]"
+                descriptionClassName="text-[var(--admin-text-muted)]"
+                retryClassName="bg-[var(--admin-purple)] hover:bg-[var(--admin-purple-hover)]"
               />
             </div>
           ) : rentalRates.length === 0 ? (
-            <div className="p-5">
-              <EmptyState
-                title="Belum ada rental rates"
-                description="Tambahkan atau aktifkan endpoint daftar rental rates di backend agar data bisa tampil di halaman admin."
-                className="border-white/10 bg-slate-950/40"
-                titleClassName="text-white"
-                descriptionClassName="text-slate-400"
-              />
-            </div>
+            <EmptyState
+              title="Belum ada rental rates"
+              description="Tambahkan atau aktifkan endpoint daftar rental rates di backend agar data bisa tampil di halaman admin."
+              className="admin-state-surface"
+              titleClassName="text-[var(--admin-text)]"
+              descriptionClassName="text-[var(--admin-text-muted)]"
+            />
           ) : (
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm">
-                <thead className="bg-white/[0.03] text-slate-400">
-                  <tr>
-                    <th className="px-5 py-4 font-medium">Console Type</th>
-                    <th className="px-5 py-4 font-medium">Price Per Hour</th>
-                    <th className="px-5 py-4 font-medium">Status</th>
-                    <th className="px-5 py-4 font-medium">Updated At</th>
-                    <th className="px-5 py-4 font-medium text-right">Action</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <div className="admin-table-wrap">
+              <div className="admin-table-scroll">
+                <table className="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Console Type</th>
+                      <th>Price Per Hour</th>
+                      <th>Status</th>
+                      <th>Updated At</th>
+                      <th className="text-right">Action</th>
+                    </tr>
+                  </thead>
+                  <tbody>
                   {rentalRates.map((rate) => (
-                    <tr
-                      key={rate.id}
-                      className="border-t border-white/10 text-slate-200"
-                    >
-                      <td className="px-5 py-4 font-semibold text-white">
+                    <tr key={rate.id} className="admin-table-row">
+                      <td className="font-semibold text-[var(--admin-text)]">
                         {rate.consoleType}
                       </td>
-                      <td className="px-5 py-4">
+                      <td className="admin-number">
                         {formatRupiah(rate.hourlyRate)}
                       </td>
-                      <td className="px-5 py-4">
+                      <td>
                         {typeof rate.isActive === "boolean" ? (
                           <span
-                            className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${
-                              rate.isActive
-                                ? "bg-emerald-500/15 text-emerald-200"
-                                : "bg-slate-500/15 text-slate-300"
+                            className={`admin-badge ${
+                              rate.isActive ? "admin-badge--success" : "admin-badge--muted"
                             }`}
                           >
                             {rate.isActive ? "Aktif" : "Nonaktif"}
                           </span>
                         ) : (
-                          <span className="text-slate-500">-</span>
+                          <span className="text-[var(--admin-text-muted)]">-</span>
                         )}
                       </td>
-                      <td className="px-5 py-4">
+                      <td>
                         {rate.updatedAt ? formatDateTime(rate.updatedAt) : "-"}
                       </td>
-                      <td className="px-5 py-4">
+                      <td>
                         <div className="flex justify-end">
                           <button
                             type="button"
                             onClick={() => handleOpenEdit(rate)}
                             disabled={updateMutation.isPending}
-                            className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-3 py-2 text-xs font-semibold text-slate-100 transition hover:bg-white/[0.08] disabled:cursor-not-allowed disabled:opacity-60"
+                            className="admin-button admin-button--secondary min-h-0 px-3 py-2 text-xs"
                           >
                             <PencilLine className="h-4 w-4" />
                             Edit
@@ -152,8 +148,9 @@ function AdminRatesPage() {
                       </td>
                     </tr>
                   ))}
-                </tbody>
-              </table>
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </div>

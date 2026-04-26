@@ -1,12 +1,17 @@
-import { useMutation } from "@tanstack/react-query";
-import { ShieldCheck, UserPlus, X } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { ShieldCheck, Trash2, UserPlus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import EmptyState from "../../components/EmptyState.jsx";
+import ErrorState from "../../components/ErrorState.jsx";
+import SectionSkeleton from "../../components/SectionSkeleton.jsx";
 import {
   createAdminUserRequest,
+  deleteAdminUserRequest,
+  getAdminUsers,
   getApiErrorMessage,
+  updateAdminUserStatusRequest,
 } from "../../lib/api.js";
 
 const initialForm = {
@@ -49,17 +54,34 @@ function validateForm(form) {
   return "";
 }
 
+function formatDateTime(value) {
+  if (!value) {
+    return "-";
+  }
+
+  return new Intl.DateTimeFormat("id-ID", {
+    dateStyle: "medium",
+    timeStyle: "short",
+  }).format(new Date(value));
+}
+
+function getRoleBadgeClass(role) {
+  return role === "ADMIN" ? "admin-badge admin-badge--purple" : "admin-badge admin-badge--info";
+}
+
+function getStatusBadgeClass(isActive) {
+  return isActive ? "admin-badge admin-badge--success" : "admin-badge admin-badge--danger";
+}
+
 function CreateCashierModal({ form, validationError, isSubmitting, onChange, onClose, onSubmit }) {
   return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-slate-950/65 p-4 backdrop-blur-sm sm:items-center">
-      <div className="w-full max-w-2xl overflow-hidden rounded-[2rem] border border-white/10 bg-slate-950 text-white shadow-[0_35px_120px_-45px_rgba(15,23,42,0.82)]">
-        <div className="flex items-start justify-between gap-4 border-b border-white/10 px-5 py-5 sm:px-6">
+    <div className="admin-modal-backdrop">
+      <div className="admin-modal max-w-2xl">
+        <div className="admin-modal-header">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-300">
-              Create Cashier
-            </p>
-            <h3 className="mt-2 text-3xl font-semibold text-white">Buat Akun Kasir</h3>
-            <p className="mt-1 text-sm text-slate-300">
+            <p className="admin-eyebrow">Users</p>
+            <h3 className="admin-title admin-title--section">Buat Akun Kasir</h3>
+            <p className="admin-description">
               Tambahkan akun operasional baru tanpa mengubah auth flow yang sudah ada.
             </p>
           </div>
@@ -68,16 +90,17 @@ function CreateCashierModal({ form, validationError, isSubmitting, onChange, onC
             type="button"
             onClick={onClose}
             disabled={isSubmitting}
-            className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border border-white/10 text-slate-300 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
+            className="admin-button admin-button--ghost h-11 w-11 px-0"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
-        <form onSubmit={onSubmit} className="space-y-5 px-5 py-5 sm:px-6">
+        <form onSubmit={onSubmit}>
+          <div className="admin-modal-body space-y-5">
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="block space-y-2 sm:col-span-2">
-              <span className="text-sm font-medium text-slate-200">Nama</span>
+              <span className="text-sm font-medium text-[var(--admin-text)]">Nama</span>
               <input
                 type="text"
                 name="name"
@@ -85,12 +108,12 @@ function CreateCashierModal({ form, validationError, isSubmitting, onChange, onC
                 onChange={onChange}
                 disabled={isSubmitting}
                 placeholder="Contoh: Kasir Malam"
-                className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-white outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                className="admin-input"
               />
             </label>
 
             <label className="block space-y-2">
-              <span className="text-sm font-medium text-slate-200">Username</span>
+              <span className="text-sm font-medium text-[var(--admin-text)]">Username</span>
               <input
                 type="text"
                 name="username"
@@ -98,12 +121,12 @@ function CreateCashierModal({ form, validationError, isSubmitting, onChange, onC
                 onChange={onChange}
                 disabled={isSubmitting}
                 placeholder="kasir_baru"
-                className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-white outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                className="admin-input"
               />
             </label>
 
             <label className="block space-y-2">
-              <span className="text-sm font-medium text-slate-200">Email opsional</span>
+              <span className="text-sm font-medium text-[var(--admin-text)]">Email opsional</span>
               <input
                 type="email"
                 name="email"
@@ -111,12 +134,12 @@ function CreateCashierModal({ form, validationError, isSubmitting, onChange, onC
                 onChange={onChange}
                 disabled={isSubmitting}
                 placeholder="kasir@rentalps.local"
-                className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-white outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                className="admin-input"
               />
             </label>
 
             <label className="block space-y-2">
-              <span className="text-sm font-medium text-slate-200">Password</span>
+              <span className="text-sm font-medium text-[var(--admin-text)]">Password</span>
               <input
                 type="password"
                 name="password"
@@ -124,12 +147,12 @@ function CreateCashierModal({ form, validationError, isSubmitting, onChange, onC
                 onChange={onChange}
                 disabled={isSubmitting}
                 placeholder="Minimal 6 karakter"
-                className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-white outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                className="admin-input"
               />
             </label>
 
             <label className="block space-y-2">
-              <span className="text-sm font-medium text-slate-200">Confirm password</span>
+              <span className="text-sm font-medium text-[var(--admin-text)]">Confirm password</span>
               <input
                 type="password"
                 name="confirmPassword"
@@ -137,37 +160,38 @@ function CreateCashierModal({ form, validationError, isSubmitting, onChange, onC
                 onChange={onChange}
                 disabled={isSubmitting}
                 placeholder="Ulangi password"
-                className="w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-white outline-none transition focus:border-violet-400 focus:ring-4 focus:ring-violet-500/10 disabled:cursor-not-allowed disabled:opacity-60"
+                className="admin-input"
               />
             </label>
           </div>
 
-          <div className="rounded-[1.5rem] border border-violet-500/14 bg-violet-500/10 px-4 py-4">
-            <p className="text-sm font-medium text-violet-100">Role yang dibuat</p>
-            <p className="mt-1 text-sm text-violet-200/80">
+          <div className="admin-note-card">
+            <p className="text-sm font-medium text-[#efe5ff]">Role yang dibuat</p>
+            <p className="mt-1 text-sm text-[#d9c4ff]">
               Semua akun dari form ini otomatis dibuat sebagai <strong>CASHIER</strong>.
             </p>
           </div>
 
           {validationError ? (
-            <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm text-rose-200">
+            <div className="rounded-[1rem] border border-[rgba(255,138,138,0.3)] bg-[rgba(255,138,138,0.12)] px-4 py-3 text-sm text-[var(--admin-danger)]">
               {validationError}
             </div>
           ) : null}
+          </div>
 
-          <div className="flex flex-col-reverse gap-3 border-t border-white/10 pt-4 sm:flex-row sm:justify-end">
+          <div className="admin-modal-footer">
             <button
               type="button"
               onClick={onClose}
               disabled={isSubmitting}
-              className="rounded-2xl border border-white/10 px-4 py-3 text-sm font-semibold text-slate-200 transition hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-60"
+              className="admin-button admin-button--secondary"
             >
               Batal
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="rounded-2xl bg-violet-500 px-4 py-3 text-sm font-semibold text-white transition hover:bg-violet-400 disabled:cursor-not-allowed disabled:opacity-60"
+              className="admin-button admin-button--primary"
             >
               {isSubmitting ? "Menyimpan..." : "Buat Kasir"}
             </button>
@@ -179,9 +203,16 @@ function CreateCashierModal({ form, validationError, isSubmitting, onChange, onC
 }
 
 function AdminUsersPage() {
+  const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [form, setForm] = useState(initialForm);
   const [validationError, setValidationError] = useState("");
+
+  const usersQuery = useQuery({
+    queryKey: ["admin-users"],
+    queryFn: getAdminUsers,
+    refetchInterval: 30000,
+  });
 
   const createUserMutation = useMutation({
     mutationFn: createAdminUserRequest,
@@ -190,6 +221,31 @@ function AdminUsersPage() {
       setForm(initialForm);
       setValidationError("");
       setIsModalOpen(false);
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error));
+    },
+  });
+
+  const updateUserStatusMutation = useMutation({
+    mutationFn: updateAdminUserStatusRequest,
+    onSuccess: (user) => {
+      toast.success(
+        `${user.name} berhasil ${user.isActive ? "diaktifkan" : "dinonaktifkan"}.`,
+      );
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
+    },
+    onError: (error) => {
+      toast.error(getApiErrorMessage(error));
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: deleteAdminUserRequest,
+    onSuccess: (user) => {
+      toast.success(`Akun kasir ${user.name} berhasil dihapus.`);
+      queryClient.invalidateQueries({ queryKey: ["admin-users"] });
     },
     onError: (error) => {
       toast.error(getApiErrorMessage(error));
@@ -259,27 +315,96 @@ function AdminUsersPage() {
     createUserMutation.mutate(payload);
   }
 
+  function handleToggleUserStatus(user) {
+    if (updateUserStatusMutation.isPending || deleteUserMutation.isPending) {
+      return;
+    }
+
+    if (user.role === "ADMIN") {
+      return;
+    }
+
+    const nextIsActive = !user.isActive;
+    const confirmed = window.confirm(
+      `${nextIsActive ? "Aktifkan" : "Nonaktifkan"} user ${user.name}?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    updateUserStatusMutation.mutate({
+      userId: user.id,
+      isActive: nextIsActive,
+    });
+  }
+
+  function handleDeleteUser(user) {
+    if (deleteUserMutation.isPending || updateUserStatusMutation.isPending) {
+      return;
+    }
+
+    if (user.role === "ADMIN") {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Yakin ingin menghapus akun kasir ini? Akun akan dinonaktifkan dan tidak bisa login.",
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    deleteUserMutation.mutate(user.id);
+  }
+
+  const users = Array.isArray(usersQuery.data) ? usersQuery.data : [];
+
+  if (usersQuery.isLoading) {
+    return (
+      <div className="admin-page">
+        <div className="admin-state-surface rounded-[1rem] p-5">
+          <SectionSkeleton variant="grid" count={2} />
+        </div>
+        <div className="admin-state-surface rounded-[1rem] p-5">
+          <SectionSkeleton variant="list" count={2} />
+        </div>
+      </div>
+    );
+  }
+
+  if (usersQuery.isError) {
+    return (
+      <ErrorState
+        title="Data user belum bisa dimuat"
+        description="Daftar user admin gagal diambil. Coba muat ulang halaman ini."
+        onRetry={() => usersQuery.refetch()}
+        className="admin-state-surface bg-[rgba(255,138,138,0.12)]"
+        titleClassName="text-[var(--admin-danger)]"
+        descriptionClassName="text-[var(--admin-text-muted)]"
+        retryClassName="bg-[var(--admin-purple)] hover:bg-[var(--admin-purple-hover)]"
+      />
+    );
+  }
+
   return (
     <>
-      <div className="space-y-6">
-        <div className="rounded-[1.75rem] border border-violet-500/18 bg-[radial-gradient(circle_at_top_left,rgba(139,92,246,0.24),transparent_30%),rgba(15,23,42,0.94)] p-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
+      <div className="admin-page">
+        <div className="admin-header-card">
+          <div className="admin-header-card__row">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-300">
-                Users
-              </p>
-              <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em] text-white">
-                Users
-              </h1>
-              <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
-                Kelola akun kasir.
+              <p className="admin-eyebrow">Users</p>
+              <h1 className="admin-title">Users</h1>
+              <p className="admin-description">
+                Kelola akun kasir
               </p>
             </div>
 
             <button
               type="button"
               onClick={handleOpenModal}
-              className="inline-flex items-center gap-2 rounded-2xl bg-violet-500 px-5 py-3 text-sm font-semibold text-white transition hover:bg-violet-400"
+              className="admin-button admin-button--primary"
             >
               <UserPlus className="h-4 w-4" />
               Buat Kasir
@@ -287,59 +412,163 @@ function AdminUsersPage() {
           </div>
         </div>
 
-        <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
-          <div className="rounded-[1.75rem] border border-violet-500/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(15,23,42,0.84))] p-5">
+        <div className="grid gap-5 xl:grid-cols-[280px_minmax(0,1fr)]">
+          <div className="admin-card">
             <div className="flex items-start justify-between gap-4">
-              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-violet-500/14 text-violet-200">
+              <div className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[rgba(124,58,237,0.14)] text-[#ddcdff]">
                 <UserPlus className="h-5 w-5" />
               </div>
-              <span className="inline-flex items-center gap-2 rounded-full border border-violet-400/18 bg-violet-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-violet-200">
-                Cashier Only
+              <span className="admin-badge admin-badge--purple">
+                CASHIER ONLY
               </span>
             </div>
 
             <div className="mt-5 space-y-3">
-              <h2 className="text-2xl font-semibold text-white">Create cashier dari admin panel</h2>
-              <p className="text-sm leading-6 text-slate-300">
-                Gunakan halaman ini untuk membuat akun kasir baru. UI ini hanya mengirim role
-                <strong> CASHIER</strong> dan tidak menyediakan pembuatan akun admin.
+              <h2 className="admin-title admin-title--section">Manajemen Kasir</h2>
+              <p className="text-sm leading-6 text-[var(--admin-text-muted)]">
+                Buat dan kelola akun kasir yang digunakan untuk operasional transaksi rental.
               </p>
             </div>
 
-            <div className="mt-5 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/35 px-4 py-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Form</p>
-                <p className="mt-2 text-lg font-semibold text-white">Nama, username, email, password</p>
-              </div>
-              <div className="rounded-[1.5rem] border border-white/10 bg-slate-950/35 px-4 py-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-slate-500">Safety</p>
-                <p className="mt-2 text-lg font-semibold text-white">Validasi frontend + API error toast</p>
-              </div>
-            </div>
+            <ul className="admin-list-compact mt-5">
+              <li className="admin-list-compact__item">
+                Role otomatis: <span className="font-semibold text-[var(--admin-text)]">CASHIER</span>
+              </li>
+              <li className="admin-list-compact__item">
+                Admin tidak bisa dibuat dari halaman ini
+              </li>
+              <li className="admin-list-compact__item">
+                Akun kasir bisa diaktifkan atau dinonaktifkan
+              </li>
+            </ul>
           </div>
 
-          <div className="rounded-[1.75rem] border border-violet-500/12 bg-white/[0.04] p-5">
+          <div className="admin-section">
             <div className="flex items-center gap-3">
-              <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-500/14 text-violet-200">
+              <div className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-[rgba(124,58,237,0.14)] text-[#ddcdff]">
                 <ShieldCheck className="h-5 w-5" />
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-300">
+                <p className="admin-eyebrow">
                   User List
                 </p>
-                <h2 className="mt-1 text-2xl font-semibold text-white">Daftar User</h2>
+                <h2 className="admin-title admin-title--section">Daftar User</h2>
               </div>
             </div>
 
-            <div className="mt-5">
+            {users.length === 0 ? (
               <EmptyState
                 title="Daftar user belum tersedia"
                 description="Daftar user akan ditambahkan setelah endpoint list users tersedia."
-                className="border-white/10 bg-slate-950/40"
-                titleClassName="text-white"
-                descriptionClassName="text-slate-400"
+                className="admin-state-surface"
+                titleClassName="text-[var(--admin-text)]"
+                descriptionClassName="text-[var(--admin-text-muted)]"
               />
-            </div>
+            ) : (
+              <div className="admin-table-wrap">
+                <div className="admin-table-scroll">
+                  <table className="admin-table">
+                    <thead>
+                      <tr>
+                        <th>Name</th>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Created At</th>
+                        <th>Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {users.map((user) => {
+                        const isProtected = user.role === "ADMIN";
+                        const isPending =
+                          updateUserStatusMutation.isPending &&
+                          updateUserStatusMutation.variables?.userId === user.id;
+                        const isDeleting =
+                          deleteUserMutation.isPending &&
+                          deleteUserMutation.variables === user.id;
+
+                        return (
+                          <tr key={user.id} className="admin-table-row">
+                            <td>
+                              <div>
+                                <p className="font-medium text-[var(--admin-text)]">{user.name}</p>
+                                <p className="text-xs text-[var(--admin-text-muted)]">
+                                  ID {user.id.slice(0, 8)}
+                                </p>
+                              </div>
+                            </td>
+                            <td>{user.username}</td>
+                            <td>{user.email || "-"}</td>
+                            <td>
+                              <span className={getRoleBadgeClass(user.role)}>
+                                {user.role}
+                              </span>
+                            </td>
+                            <td>
+                              <span className={getStatusBadgeClass(user.isActive)}>
+                                {user.isActive ? "ACTIVE" : "INACTIVE"}
+                              </span>
+                            </td>
+                            <td>{formatDateTime(user.createdAt)}</td>
+                            <td>
+                              {isProtected ? (
+                                <span className="admin-badge admin-badge--muted">
+                                  Protected
+                                </span>
+                              ) : (
+                                <div className="flex flex-wrap gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleToggleUserStatus(user)}
+                                    disabled={
+                                      updateUserStatusMutation.isPending ||
+                                      deleteUserMutation.isPending
+                                    }
+                                    className={`admin-button min-h-0 px-4 py-2 text-sm ${
+                                      updateUserStatusMutation.isPending ||
+                                      deleteUserMutation.isPending
+                                        ? "admin-button--ghost"
+                                        : user.isActive
+                                          ? "admin-button--danger"
+                                          : "admin-button--success"
+                                    }`}
+                                  >
+                                    {isPending
+                                      ? "Menyimpan..."
+                                      : user.isActive
+                                        ? "Nonaktifkan"
+                                        : "Aktifkan"}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteUser(user)}
+                                    disabled={
+                                      updateUserStatusMutation.isPending ||
+                                      deleteUserMutation.isPending
+                                    }
+                                    className={`admin-button admin-button--danger min-h-0 px-4 py-2 text-sm ${
+                                      updateUserStatusMutation.isPending ||
+                                      deleteUserMutation.isPending
+                                        ? "admin-button--ghost"
+                                        : ""
+                                    }`}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                    {isDeleting ? "Menghapus..." : "Hapus"}
+                                  </button>
+                                </div>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

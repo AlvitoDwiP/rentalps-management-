@@ -12,7 +12,12 @@ const {
 } = require("../controllers/package/package.controller");
 const { updateRate } = require("../controllers/rate/rate.controller");
 const { setConsoleMaintenance } = require("../controllers/console/console.controller");
-const { createUser } = require("../controllers/user/user.controller");
+const {
+  createUser,
+  listUsers,
+  updateUserStatus,
+  deleteUser,
+} = require("../controllers/user/user.controller");
 const { authenticate } = require("../middlewares/auth.middleware");
 const { authorizeRoles } = require("../middlewares/role.middleware");
 
@@ -31,6 +36,9 @@ router.delete("/packages/:id", deletePackage);
 
 router.patch("/rates/:id", updateRate);
 router.patch("/consoles/:id/maintenance", setConsoleMaintenance);
+router.get("/users", listUsers);
 router.post("/users", createUser);
+router.patch("/users/:id/status", updateUserStatus);
+router.delete("/users/:id", deleteUser);
 
 module.exports = router;

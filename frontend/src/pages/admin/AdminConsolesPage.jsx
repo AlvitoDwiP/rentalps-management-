@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Search, Settings2, Tv } from "lucide-react";
+import { Search, Tv } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -28,12 +28,12 @@ function formatUpdatedAt(value) {
 
 function getStatusClasses(status) {
   const statusClassMap = {
-    AVAILABLE: "border-emerald-500/20 bg-emerald-500/10 text-emerald-200",
-    IN_USE: "border-sky-500/20 bg-sky-500/10 text-sky-200",
-    MAINTENANCE: "border-amber-500/20 bg-amber-500/10 text-amber-200",
+    AVAILABLE: "admin-badge admin-badge--success",
+    IN_USE: "admin-badge admin-badge--info",
+    MAINTENANCE: "admin-badge admin-badge--warning",
   };
 
-  return statusClassMap[status] || "border-white/10 bg-white/[0.06] text-slate-200";
+  return statusClassMap[status] || "admin-badge admin-badge--muted";
 }
 
 function FilterButton({ active, children, onClick }) {
@@ -41,10 +41,10 @@ function FilterButton({ active, children, onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-full border px-3 py-2 text-xs font-semibold uppercase tracking-[0.16em] transition ${
+      className={`admin-button min-h-0 rounded-full px-3 py-1.5 text-[11px] uppercase tracking-[0.14em] ${
         active
-          ? "border-violet-400/30 bg-violet-500 text-white shadow-[0_18px_40px_-26px_rgba(139,92,246,0.85)]"
-          : "border-white/10 bg-white/[0.03] text-slate-300 hover:bg-white/[0.08]"
+          ? "admin-button--primary"
+          : "admin-button--secondary"
       }`}
     >
       {children}
@@ -120,10 +120,13 @@ function AdminConsolesPage() {
 
   if (consolesQuery.isLoading) {
     return (
-      <div className="space-y-5">
-        <SectionSkeleton className="h-44 rounded-[1.75rem] border border-violet-500/16 bg-white/[0.04]" />
-        <SectionSkeleton className="h-28 rounded-[1.75rem] border border-violet-500/16 bg-white/[0.04]" />
-        <SectionSkeleton className="h-[26rem] rounded-[1.75rem] border border-violet-500/16 bg-white/[0.04]" />
+      <div className="admin-page">
+        <div className="admin-state-surface rounded-[1rem] p-5">
+          <SectionSkeleton variant="grid" count={3} />
+        </div>
+        <div className="admin-state-surface rounded-[1rem] p-5">
+          <SectionSkeleton variant="list" count={3} />
+        </div>
       </div>
     );
   }
@@ -134,41 +137,47 @@ function AdminConsolesPage() {
         title="Data console belum bisa dimuat"
         description="Daftar console admin gagal diambil. Coba muat ulang halaman ini."
         onRetry={() => consolesQuery.refetch()}
+        className="admin-state-surface bg-[rgba(255,138,138,0.12)]"
+        titleClassName="text-[var(--admin-danger)]"
+        descriptionClassName="text-[var(--admin-text-muted)]"
+        retryClassName="bg-[var(--admin-purple)] hover:bg-[var(--admin-purple-hover)]"
       />
     );
   }
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-[1.75rem] border border-violet-500/18 bg-[radial-gradient(circle_at_top_left,rgba(139,92,246,0.24),transparent_30%),rgba(15,23,42,0.94)] p-6">
-        <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="admin-page">
+      <div className="admin-header-card !py-5">
+        <div className="admin-header-card__row items-center">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-300">
-              Console
-            </p>
-            <h1 className="mt-3 text-4xl font-semibold tracking-[-0.05em] text-white">
-              Console Control
-            </h1>
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-slate-300">
-              Kelola status console dan maintenance tanpa menyentuh flow dashboard kasir.
+            <p className="admin-eyebrow">CONSOLE</p>
+            <h1 className="admin-title">Console</h1>
+            <p className="admin-description mt-2">
+              Kelola status console dan maintenance.
             </p>
           </div>
-          <div className="grid min-w-[220px] gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-emerald-500/18 bg-emerald-500/10 px-4 py-3">
-              <p className="text-xs uppercase tracking-[0.16em] text-emerald-200/80">Available</p>
-              <p className="font-display-number mt-2 text-2xl font-semibold text-emerald-100">
+          <div className="grid w-full gap-2 sm:w-auto sm:grid-cols-3">
+            <div className="rounded-2xl border border-[rgba(126,217,87,0.18)] bg-[rgba(126,217,87,0.08)] px-3 py-2.5">
+              <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--admin-success)]">
+                AVAILABLE
+              </p>
+              <p className="font-display-number mt-1.5 text-xl font-semibold text-[var(--admin-text)]">
                 {summary.available}
               </p>
             </div>
-            <div className="rounded-2xl border border-sky-500/18 bg-sky-500/10 px-4 py-3">
-              <p className="text-xs uppercase tracking-[0.16em] text-sky-200/80">In Use</p>
-              <p className="font-display-number mt-2 text-2xl font-semibold text-sky-100">
+            <div className="rounded-2xl border border-[rgba(138,180,248,0.18)] bg-[rgba(138,180,248,0.08)] px-3 py-2.5">
+              <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--admin-link)]">
+                IN USE
+              </p>
+              <p className="font-display-number mt-1.5 text-xl font-semibold text-[var(--admin-text)]">
                 {summary.inUse}
               </p>
             </div>
-            <div className="rounded-2xl border border-amber-500/18 bg-amber-500/10 px-4 py-3">
-              <p className="text-xs uppercase tracking-[0.16em] text-amber-200/80">Maintenance</p>
-              <p className="font-display-number mt-2 text-2xl font-semibold text-amber-100">
+            <div className="rounded-2xl border border-[rgba(251,191,36,0.18)] bg-[rgba(251,191,36,0.08)] px-3 py-2.5">
+              <p className="text-[10px] uppercase tracking-[0.16em] text-[var(--admin-amber)]">
+                MAINTENANCE
+              </p>
+              <p className="font-display-number mt-1.5 text-xl font-semibold text-[var(--admin-text)]">
                 {summary.maintenance}
               </p>
             </div>
@@ -176,101 +185,82 @@ function AdminConsolesPage() {
         </div>
       </div>
 
-      <div className="rounded-[1.75rem] border border-violet-500/12 bg-[linear-gradient(180deg,rgba(255,255,255,0.05),rgba(15,23,42,0.82))] p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-300">
-              Filter Console
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold text-white">Temukan console lebih cepat</h2>
+      <div className="admin-filter-bar gap-3 !py-4 !px-5 xl:grid-cols-[minmax(220px,1.2fr)_auto_auto_auto] xl:items-center">
+        <label className="block min-w-0">
+          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--admin-text-muted)]">
+            Search
+          </span>
+          <div className="flex items-center gap-3 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-card-soft)] px-3.5 py-2.5">
+            <Search className="h-4 w-4 text-[var(--admin-text-muted)]" />
+            <input
+              type="text"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              placeholder="Cari console..."
+              className="w-full bg-transparent text-sm text-[var(--admin-text)] outline-none placeholder:text-[var(--admin-text-muted)]"
+            />
           </div>
-          <div className="inline-flex items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-slate-300">
-            <Settings2 className="h-4 w-4 text-violet-200" />
-            <span>Total {summary.total} console</span>
+        </label>
+
+        <div className="min-w-0">
+          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--admin-text-muted)]">
+            Type
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {TYPE_OPTIONS.map((option) => (
+              <FilterButton
+                key={option}
+                active={typeFilter === option}
+                onClick={() => setTypeFilter(option)}
+              >
+                {option}
+              </FilterButton>
+            ))}
           </div>
         </div>
 
-        <div className="mt-5 grid gap-4 xl:grid-cols-[1.4fr_1fr_1fr]">
-          <label className="block">
-            <span className="mb-2 block text-sm font-medium text-slate-300">Search code</span>
-            <div className="flex items-center gap-3 rounded-2xl border border-white/10 bg-slate-950/45 px-4 py-3">
-              <Search className="h-4 w-4 text-slate-500" />
-              <input
-                type="text"
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="Cari PS5-03"
-                className="w-full bg-transparent text-sm text-white outline-none placeholder:text-slate-500"
-              />
-            </div>
-          </label>
-
-          <div>
-            <span className="mb-2 block text-sm font-medium text-slate-300">Filter type</span>
-            <div className="flex flex-wrap gap-2">
-              {TYPE_OPTIONS.map((option) => (
-                <FilterButton
-                  key={option}
-                  active={typeFilter === option}
-                  onClick={() => setTypeFilter(option)}
-                >
-                  {option}
-                </FilterButton>
-              ))}
-            </div>
+        <div className="min-w-0">
+          <span className="mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.14em] text-[var(--admin-text-muted)]">
+            Status
+          </span>
+          <div className="flex flex-wrap gap-2">
+            {STATUS_OPTIONS.map((option) => (
+              <FilterButton
+                key={option}
+                active={statusFilter === option}
+                onClick={() => setStatusFilter(option)}
+              >
+                {option}
+              </FilterButton>
+            ))}
           </div>
+        </div>
 
-          <div>
-            <span className="mb-2 block text-sm font-medium text-slate-300">Filter status</span>
-            <div className="flex flex-wrap gap-2">
-              {STATUS_OPTIONS.map((option) => (
-                <FilterButton
-                  key={option}
-                  active={statusFilter === option}
-                  onClick={() => setStatusFilter(option)}
-                >
-                  {option}
-                </FilterButton>
-              ))}
-            </div>
-          </div>
+        <div className="inline-flex items-center justify-center self-end rounded-full border border-[rgba(124,58,237,0.22)] bg-[rgba(124,58,237,0.12)] px-3 py-1.5 text-xs font-semibold text-[#ddcdff] xl:self-center">
+          {filteredConsoles.length} console cocok
         </div>
       </div>
 
-      <div className="rounded-[1.75rem] border border-violet-500/12 bg-white/[0.04] p-5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.24em] text-violet-300">
-              Console List
-            </p>
-            <h2 className="mt-2 text-2xl font-semibold text-white">Status Console</h2>
-          </div>
-          <div className="inline-flex items-center gap-2 rounded-full border border-violet-400/18 bg-violet-500/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-violet-200">
-            {filteredConsoles.length} console cocok
-          </div>
-        </div>
-
+      <div className="admin-section !p-5">
         {filteredConsoles.length === 0 ? (
-          <div className="mt-5">
-            <EmptyState
-              title="Console tidak ditemukan"
-              description="Coba ubah kata kunci pencarian atau filter status dan type console."
-              className="border-white/10 bg-slate-950/40"
-              titleClassName="text-white"
-              descriptionClassName="text-slate-400"
-            />
-          </div>
+          <EmptyState
+            title="Console tidak ditemukan"
+            description="Coba ubah kata kunci pencarian atau filter status dan type console."
+            className="admin-state-surface"
+            titleClassName="text-[var(--admin-text)]"
+            descriptionClassName="text-[var(--admin-text-muted)]"
+          />
         ) : (
-          <div className="mt-5 overflow-hidden rounded-[1.5rem] border border-white/8 bg-slate-950/35">
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-left text-sm">
-                <thead className="bg-white/[0.04] text-xs uppercase tracking-[0.16em] text-slate-400">
+          <div className="admin-table-wrap mt-0">
+            <div className="admin-table-scroll">
+              <table className="admin-table">
+                <thead>
                   <tr>
-                    <th className="px-4 py-3 font-medium">Code</th>
-                    <th className="px-4 py-3 font-medium">Type</th>
-                    <th className="px-4 py-3 font-medium">Status</th>
-                    <th className="px-4 py-3 font-medium">Updated At</th>
-                    <th className="px-4 py-3 font-medium">Action</th>
+                    <th>Code</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Updated At</th>
+                    <th className="text-right">Action</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -284,60 +274,60 @@ function AdminConsolesPage() {
                       consoleUnit.status === "MAINTENANCE" ? "Set Available" : "Set Maintenance";
 
                     return (
-                      <tr
-                        key={consoleUnit.id}
-                        className="border-b border-white/6 text-slate-200 last:border-b-0"
-                      >
-                        <td className="px-4 py-4">
+                      <tr key={consoleUnit.id} className="admin-table-row">
+                        <td className="py-3">
                           <div className="flex items-center gap-3">
-                            <div className="inline-flex h-10 w-10 items-center justify-center rounded-2xl border border-violet-500/18 bg-violet-500/10 text-violet-200">
+                            <div className="inline-flex h-9 w-9 items-center justify-center rounded-xl border border-[rgba(124,58,237,0.14)] bg-[rgba(124,58,237,0.1)] text-[#ddcdff]">
                               <Tv className="h-4 w-4" />
                             </div>
                             <div>
-                              <p className="font-display-number text-base font-semibold text-white">
+                              <p className="font-display-number text-sm font-semibold text-[var(--admin-text)]">
                                 {consoleUnit.code}
                               </p>
-                              <p className="text-xs text-slate-500">
+                              <p className="text-[11px] text-[var(--admin-text-muted)]">
                                 ID {consoleUnit.id.slice(0, 8)}
                               </p>
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-4">
-                          <span className="inline-flex rounded-full border border-white/10 bg-white/[0.05] px-3 py-1 text-xs font-semibold text-slate-200">
+                        <td className="py-3">
+                          <span className="admin-badge admin-badge--muted">
                             {consoleUnit.consoleType}
                           </span>
                         </td>
-                        <td className="px-4 py-4">
-                          <span
-                            className={`inline-flex rounded-full border px-3 py-1 text-xs font-semibold ${getStatusClasses(consoleUnit.status)}`}
-                          >
+                        <td className="py-3">
+                          <span className={getStatusClasses(consoleUnit.status)}>
                             {consoleUnit.status}
                           </span>
                         </td>
-                        <td className="px-4 py-4 text-slate-300">
-                          {formatUpdatedAt(consoleUnit.updatedAt)}
-                        </td>
-                        <td className="px-4 py-4">
-                          <div className="flex flex-col gap-2">
+                        <td className="py-3 text-sm">{formatUpdatedAt(consoleUnit.updatedAt)}</td>
+                        <td className="py-3 text-right">
+                          {isInUse ? (
+                            <div className="inline-flex flex-col items-end gap-1">
+                              <button
+                                type="button"
+                                disabled
+                                className="admin-button admin-button--ghost min-h-0 px-3 py-2 text-xs"
+                              >
+                                Sedang dipakai
+                              </button>
+                            </div>
+                          ) : (
                             <button
                               type="button"
                               onClick={() => handleMaintenanceToggle(consoleUnit)}
-                              disabled={isInUse || updateConsoleMutation.isPending}
-                              className={`inline-flex items-center justify-center rounded-2xl px-4 py-2 text-sm font-semibold transition ${
-                                isInUse || updateConsoleMutation.isPending
-                                  ? "cursor-not-allowed border border-white/10 bg-white/[0.04] text-slate-500"
+                              disabled={updateConsoleMutation.isPending}
+                              className={`admin-button min-h-0 px-3 py-2 text-xs ${
+                                updateConsoleMutation.isPending
+                                  ? "admin-button--ghost"
                                   : nextStatus === "MAINTENANCE"
-                                    ? "border border-amber-500/20 bg-amber-500/12 text-amber-100 hover:bg-amber-500/18"
-                                    : "border border-emerald-500/20 bg-emerald-500/12 text-emerald-100 hover:bg-emerald-500/18"
+                                    ? "admin-button--warning"
+                                    : "admin-button--success"
                               }`}
                             >
                               {isPending ? "Menyimpan..." : actionLabel}
                             </button>
-                            {isInUse ? (
-                              <p className="text-xs text-slate-500">Console sedang dipakai</p>
-                            ) : null}
-                          </div>
+                          )}
                         </td>
                       </tr>
                     );
